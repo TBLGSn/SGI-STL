@@ -37,6 +37,7 @@ __STL_BEGIN_NAMESPACE
 #pragma set woff 1174
 #endif
 
+//单个节点，4.9版本不在使用void指针 
 template <class T>
 struct __list_node {
   typedef void* void_pointer;
@@ -44,7 +45,14 @@ struct __list_node {
   void_pointer prev;
   T data;
 };
-
+/*链表迭代器的“基结构”,4.9版本只有一个参数即可
+  template <class T> 
+  struct __list_iterator{
+    typedef T* pointer;
+    typedef T& reference;
+    ....
+  }
+*/
 template<class T, class Ref, class Ptr>
 struct __list_iterator {
   typedef __list_iterator<T, T&, T*>             iterator;
@@ -59,7 +67,7 @@ struct __list_iterator {
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
 
-  link_type node;
+  link_type node; //指针
 
   __list_iterator(link_type x) : node(x) {}
   __list_iterator() {}
@@ -67,20 +75,21 @@ struct __list_iterator {
 
   bool operator==(const self& x) const { return node == x.node; }
   bool operator!=(const self& x) const { return node != x.node; }
-  reference operator*() const { return (*node).data; }
+  reference operator*() const { return (*node).data; } //reference == T&
 
 #ifndef __SGI_STL_NO_ARROW_OPERATOR
   pointer operator->() const { return &(operator*()); }
 #endif /* __SGI_STL_NO_ARROW_OPERATOR */
-
-  self& operator++() { 
+  //重载 ++ 运算符
+  self& operator++() { //++i
     node = (link_type)((*node).next);
     return *this;
   }
-  self operator++(int) { 
-    self tmp = *this;
-    ++*this;
-    return tmp;
+  //返回类型为self&阻止了 出现 i++++ 的情况
+  self operator++(int) { //++i
+    self tmp = *this; //调用拷贝构造函数，而不是重载之后的operator*()
+    ++*this; //调用 operator++() 而不是
+    return tmp; //赋值构造器
   }
   self& operator--() { 
     node = (link_type)((*node).prev);
@@ -115,6 +124,7 @@ distance_type(const __list_iterator<T, Ref, Ptr>&) {
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
 
+// list主类，使用alloc作为默认配置器
 template <class T, class Alloc = alloc>
 class list {
 protected:
@@ -132,7 +142,7 @@ public:
   typedef ptrdiff_t difference_type;
 
 public:
-  typedef __list_iterator<T, T&, T*>             iterator;
+  typedef __list_iterator<T, T&, T*>             iterator; // 迭代器,表示某一个类(不能使用像vector等简单迭代器)
   typedef __list_iterator<T, const T&, const T*> const_iterator;
 
 #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
@@ -206,14 +216,14 @@ protected:
 #endif /* __STL_MEMBER_TEMPLATES */
 
 protected:
-  link_type node;
+  link_type node; // 一个指向节点的指针
 
 public:
   list() { empty_initialize(); }
 
-  iterator begin() { return (link_type)((*node).next); }
+  iterator begin() { return (link_type)((*node).next); } //因为使用的是void*，所以需要执行强制类型转换
   const_iterator begin() const { return (link_type)((*node).next); }
-  iterator end() { return node; }
+  iterator end() { return node; }// 链表会有一个假节点
   const_iterator end() const { return node; }
   reverse_iterator rbegin() { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const { 
