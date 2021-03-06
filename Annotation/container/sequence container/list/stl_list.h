@@ -58,14 +58,15 @@ struct __list_iterator {
   typedef __list_iterator<T, T&, T*>             iterator;
   typedef __list_iterator<T, const T&, const T*> const_iterator;
   typedef __list_iterator<T, Ref, Ptr>           self;
-
-  typedef bidirectional_iterator_tag iterator_category;
-  typedef T value_type;
+  // 五种iterator必须提供五种types
+  typedef bidirectional_iterator_tag iterator_category;//迭代器的方向
+  typedef T value_type; //迭代器类型
   typedef Ptr pointer;
   typedef Ref reference;
-  typedef __list_node<T>* link_type;
+  typedef ptrdiff_t difference_type;//两个literator之间的距离
+
+  typedef __list_node<T>* link_type; 
   typedef size_t size_type;
-  typedef ptrdiff_t difference_type;
 
   link_type node; //指针
 

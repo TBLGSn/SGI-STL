@@ -80,6 +80,7 @@ template <class T, class Distance> struct random_access_iterator {
   typedef T&                         reference;
 };
 
+//迭代器
 #ifdef __STL_USE_NAMESPACES
 template <class Category, class T, class Distance = ptrdiff_t,
           class Pointer = T*, class Reference = T&>
@@ -92,8 +93,13 @@ struct iterator {
 };
 #endif /* __STL_USE_NAMESPACES */
 
+/*
+萃取器，用以区分迭代器和native指针 (迭代器的本质是一种指针)
+作为迭代器和算法之间交流的媒介，因为我们需要区分迭代器和native指针
+当传入的是指针时，调用偏特化版本，否则调用通用版本  
+算法提问方式由直接使用 T::iterator_category 转变为 使用iterator_traits<T>::iterator_category
+*/
 #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
-
 template <class Iterator>
 struct iterator_traits {
   typedef typename Iterator::iterator_category iterator_category;
@@ -102,7 +108,7 @@ struct iterator_traits {
   typedef typename Iterator::pointer           pointer;
   typedef typename Iterator::reference         reference;
 };
-
+//偏特化，传入的是指针时，使用这个版本
 template <class T>
 struct iterator_traits<T*> {
   typedef random_access_iterator_tag iterator_category;
@@ -116,6 +122,7 @@ template <class T>
 struct iterator_traits<const T*> {
   typedef random_access_iterator_tag iterator_category;
   typedef T                          value_type;
+  //不是const T,因为value_type常用来声明变量,声明一个不能赋值的变量是无用的
   typedef ptrdiff_t                  difference_type;
   typedef const T*                   pointer;
   typedef const T&                   reference;
