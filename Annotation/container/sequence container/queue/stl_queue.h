@@ -32,7 +32,9 @@
 #define __SGI_STL_INTERNAL_QUEUE_H
 
 __STL_BEGIN_NAMESPACE
-
+/*
+  通过deque<T>实现
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class T, class Sequence = deque<T> >
 #else

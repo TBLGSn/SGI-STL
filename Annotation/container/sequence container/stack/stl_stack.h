@@ -32,7 +32,15 @@
 #define __SGI_STL_INTERNAL_STACK_H
 
 __STL_BEGIN_NAMESPACE
-
+/*
+  通过deque<T>实现
+  stack和queue可以使用list作为底层结构
+  stack和queue都不提供迭代器
+  
+  queue不可以使用vector作为底层，而stack可以
+  stack和queue都不能选择set和map作为底部支持
+  (有些成员函数不提供)
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class T, class Sequence = deque<T> >
 #else
