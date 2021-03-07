@@ -92,7 +92,9 @@ inline size_t __deque_buf_size(size_t n, size_t sz)
   return n != 0 ? n : (sz < 512 ? size_t(512 / sz) : size_t(1));
 }
 
+//deque的迭代器
 #ifndef __STL_NON_TYPE_TMPL_PARAM_BUG
+
 template <class T, class Ref, class Ptr, size_t BufSiz>
 struct __deque_iterator {
   typedef __deque_iterator<T, T&, T*, BufSiz>             iterator;
@@ -106,7 +108,7 @@ struct __deque_iterator {
   static size_t buffer_size() {return __deque_buf_size(0, sizeof(T)); }
 #endif
 
-  typedef random_access_iterator_tag iterator_category;
+  typedef random_access_iterator_tag iterator_category; //随机访问迭代器
   typedef T value_type;
   typedef Ptr pointer;
   typedef Ref reference;
@@ -116,10 +118,11 @@ struct __deque_iterator {
 
   typedef __deque_iterator self;
 
+  //Data
   T* cur;
-  T* first;
+  T* first; 
   T* last;
-  map_pointer node;
+  map_pointer node; //T**指向控制中心中的元素
 
   __deque_iterator(T* x, map_pointer y) 
     : cur(x), first(*y), last(*y + buffer_size()), node(y) {}
@@ -133,13 +136,14 @@ struct __deque_iterator {
 #endif /* __SGI_STL_NO_ARROW_OPERATOR */
 
   difference_type operator-(const self& x) const {
+    //buffer数量 * buffer的大小 + 两端buffer中元素的个数 
     return difference_type(buffer_size()) * (node - x.node - 1) +
       (cur - first) + (x.last - x.cur);
   }
 
   self& operator++() {
     ++cur;
-    if (cur == last) {
+    if (cur == last) { //到达buffer边界
       set_node(node + 1);
       cur = first;
     }
@@ -147,7 +151,7 @@ struct __deque_iterator {
   }
   self operator++(int)  {
     self tmp = *this;
-    ++*this;
+    ++*this; //后++调用前++
     return tmp;
   }
 
@@ -164,10 +168,12 @@ struct __deque_iterator {
     --*this;
     return tmp;
   }
-
+  //为什么不调用 n 次 ++ ？
   self& operator+=(difference_type n) {
     difference_type offset = n + (cur - first);
+
     if (offset >= 0 && offset < difference_type(buffer_size()))
+    //还在当前buffer
       cur += n;
     else {
       difference_type node_offset =
@@ -184,11 +190,11 @@ struct __deque_iterator {
     return tmp += n;
   }
 
-  self& operator-=(difference_type n) { return *this += -n; }
+  self& operator-=(difference_type n) { return *this += -n; } //调用 +=
  
   self operator-(difference_type n) const {
     self tmp = *this;
-    return tmp -= n;
+    return tmp -= n; 
   }
 
   reference operator[](difference_type n) const { return *(*this + n); }
@@ -198,7 +204,7 @@ struct __deque_iterator {
   bool operator<(const self& x) const {
     return (node == x.node) ? (cur < x.cur) : (node < x.node);
   }
-
+  
   void set_node(map_pointer new_node) {
     node = new_node;
     first = *new_node;
@@ -249,6 +255,12 @@ inline ptrdiff_t* distance_type(const __deque_iterator<T, Ref, Ptr>&) {
 // See __deque_buf_size().  The only reason that the default value is 0
 //  is as a workaround for bugs in the way that some compilers handle
 //  constant expressions.
+/*
+  deque的具体实现很复杂，需要详细分析理解
+  精华部分在于 1. 迭代器如何模拟连续空间
+    2. deque类如何管理空间(对于buffer个数的维护)
+*/
+//BufSize : 每一个buffer的大小
 template <class T, class Alloc = alloc, size_t BufSiz = 0> 
 class deque {
 public:                         // Basic types
@@ -291,11 +303,16 @@ protected:                      // Internal typedefs
   static size_type initial_map_size() { return 8; }
 
 protected:                      // Data members
-  iterator start;
-  iterator finish;
+  /*前指针,指向的是某一个buffer
+    而buffer其中的cur，表示的是buffer中的一个元素(表示逻辑上第一个元素)
+    buffer中的frist,end指出buffer中未使用元素的空间
+  */
+  iterator start;   
+  //后指针,原理同上  
+  iterator finish;  
 
-  map_pointer map;
-  size_type map_size;
+  map_pointer map;  //控制中心 T**类型，其中的元素(T*类型)指向一个个buffer
+  size_type map_size; //控制中心的大小
 
 public:                         // Basic accessors
   iterator begin() { return start; }
@@ -318,9 +335,9 @@ public:                         // Basic accessors
   }
 
   reference front() { return *start; }
-  reference back() {
+  reference back() { //左闭右开
     iterator tmp = finish;
-    --tmp;
+    --tmp; //迭代器重载-- 
     return *tmp;
   }
   const_reference front() const { return *start; }
@@ -330,7 +347,7 @@ public:                         // Basic accessors
     return *tmp;
   }
 
-  size_type size() const { return finish - start;; }
+  size_type size() const { return finish - start;; } //迭代器重载 操作符 - 
   size_type max_size() const { return size_type(-1); }
   bool empty() const { return finish == start; }
 
@@ -475,11 +492,11 @@ public:                         // push_* and pop_*
 public:                         // Insert
 
   iterator insert(iterator position, const value_type& x) {
-    if (position.cur == start.cur) {
+    if (position.cur == start.cur) { //如果插入位置是deque的最前端，则调用push_front函数
       push_front(x);
       return start;
     }
-    else if (position.cur == finish.cur) {
+    else if (position.cur == finish.cur) { //如果是deque的后端，则调用push_back函数
       push_back(x);
       iterator tmp = finish;
       --tmp;
@@ -965,12 +982,16 @@ void deque<T, Alloc, BufSize>::insert(iterator pos,
 
 #endif /* __STL_MEMBER_TEMPLATES */
 
+/*
+  在指定的位置插入数据,
+  其会选择移动前后两端中元素较少的一端
+*/
 template <class T, class Alloc, size_t BufSize>
 typename deque<T, Alloc, BufSize>::iterator
 deque<T, Alloc, BufSize>::insert_aux(iterator pos, const value_type& x) {
-  difference_type index = pos - start;
+  difference_type index = pos - start; //安插点之前的元素个数
   value_type x_copy = x;
-  if (index < size() / 2) {
+  if (index < size() / 2) { //前一段元素较少，移动指定位置之前的元素
     push_front(front());
     iterator front1 = start;
     ++front1;
@@ -981,7 +1002,7 @@ deque<T, Alloc, BufSize>::insert_aux(iterator pos, const value_type& x) {
     ++pos1;
     copy(front2, pos1, front1);
   }
-  else {
+  else { //移动当前元素之后的元素
     push_back(back());
     iterator back1 = finish;
     --back1;
