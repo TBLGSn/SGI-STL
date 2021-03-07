@@ -36,15 +36,18 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-
+/*
+  vector最应该担心的是空间的“扩容问题”，当当前空间不够用时，我们不得不进行扩容操作
+  会调用大量的 copy 构造函数，和析解函数
+*/
 template <class T, class Alloc = alloc>
 class vector {
 public:
   typedef T value_type;
   typedef value_type* pointer;
   typedef const value_type* const_pointer;
-  typedef value_type* iterator;
-  typedef const value_type* const_iterator;
+  typedef value_type* iterator;//迭代器并没有设计成class，而是使用指针 T* 的方式实现的，所以萃取器使用的是偏特化版本
+  typedef const value_type* const_iterator; 
   typedef value_type& reference;
   typedef const value_type& const_reference;
   typedef size_t size_type;
@@ -61,9 +64,11 @@ public:
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
 protected:
   typedef simple_alloc<value_type, Alloc> data_allocator;
+  //三个指针完成对于vector的实现
   iterator start;
   iterator finish;
   iterator end_of_storage;
+
   void insert_aux(iterator position, const T& x);
   void deallocate() {
     if (start) data_allocator::deallocate(start, end_of_storage - start);
@@ -87,11 +92,11 @@ public:
   const_reverse_iterator rend() const { 
     return const_reverse_iterator(begin()); 
   }
-  size_type size() const { return size_type(end() - begin()); }
+  size_type size() const { return size_type(end() - begin()); } //通过函数调用的函数实现，而不是end跟begin指针的加减
   size_type max_size() const { return size_type(-1) / sizeof(T); }
   size_type capacity() const { return size_type(end_of_storage - begin()); }
   bool empty() const { return begin() == end(); }
-  reference operator[](size_type n) { return *(begin() + n); }
+  reference operator[](size_type n) { return *(begin() + n); } //重写 [] ,返回T&
   const_reference operator[](size_type n) const { return *(begin() + n); }
 
   vector() : start(0), finish(0), end_of_storage(0) {}
@@ -142,9 +147,9 @@ public:
   reference back() { return *(end() - 1); }
   const_reference back() const { return *(end() - 1); }
   void push_back(const T& x) {
-    if (finish != end_of_storage) {
+    if (finish != end_of_storage) { //还有剩余空间
       construct(finish, x);
-      ++finish;
+      ++finish; //指针++
     }
     else
       insert_aux(end(), x);
@@ -330,13 +335,15 @@ void vector<T, Alloc>::insert_aux(iterator position, const T& x) {
   }
   else {
     const size_type old_size = size();
-    const size_type len = old_size != 0 ? 2 * old_size : 1;
-    iterator new_start = data_allocator::allocate(len);
+    const size_type len = old_size != 0 ? 2 * old_size : 1; // 空间变为原来的两倍,平均代价为O(1)
+    iterator new_start = data_allocator::allocate(len);//申请空间
     iterator new_finish = new_start;
     __STL_TRY {
+      //拷贝原vector中的元素
       new_finish = uninitialized_copy(start, position, new_start);
-      construct(new_finish, x);
+      construct(new_finish, x); //新元素赋新值
       ++new_finish;
+      //拷贝安插点之后的内容
       new_finish = uninitialized_copy(position, finish, new_finish);
     }
 
