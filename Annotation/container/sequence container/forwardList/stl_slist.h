@@ -275,10 +275,10 @@ public:
 
 public:
 
-  iterator begin() { return iterator((list_node*)head.next); }
+  iterator begin() { return iterator((list_node*)head.next); } //头结点的下一个节点
   const_iterator begin() const { return const_iterator((list_node*)head.next);}
 
-  iterator end() { return iterator(0); }
+  iterator end() { return iterator(0); } //单链表，无法返回最后的元素
   const_iterator end() const { return const_iterator(0); }
 
   size_type size() const { return __slist_size(head.next); }
