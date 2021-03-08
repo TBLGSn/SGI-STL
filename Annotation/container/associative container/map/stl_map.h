@@ -36,7 +36,10 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-
+/*
+  以 红黑树 为底层结构，有自动排序性质
+  无法通过迭代器改变key，但却能改变data部分
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class T, class Compare = less<Key>, class Alloc = alloc>
 #else
@@ -74,7 +77,7 @@ public:
   typedef typename rep_type::const_pointer const_pointer;
   typedef typename rep_type::reference reference;
   typedef typename rep_type::const_reference const_reference;
-  typedef typename rep_type::iterator iterator;
+  typedef typename rep_type::iterator iterator; //迭代器不在像set是const迭代器
   typedef typename rep_type::const_iterator const_iterator;
   typedef typename rep_type::reverse_iterator reverse_iterator;
   typedef typename rep_type::const_reverse_iterator const_reverse_iterator;
@@ -128,6 +131,7 @@ public:
   bool empty() const { return t.empty(); }
   size_type size() const { return t.size(); }
   size_type max_size() const { return t.max_size(); }
+  //重写operator[] 返回一个reference指向带有key的元素,key如果已经存在这么办？
   T& operator[](const key_type& k) {
     return (*((insert(value_type(k, T()))).first)).second;
   }
