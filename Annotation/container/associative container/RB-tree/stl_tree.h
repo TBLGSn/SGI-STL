@@ -63,7 +63,7 @@ __STL_BEGIN_NAMESPACE
 typedef bool __rb_tree_color_type;
 const __rb_tree_color_type __rb_tree_red = false;
 const __rb_tree_color_type __rb_tree_black = true;
-
+//红黑树节点
 struct __rb_tree_node_base
 {
   typedef __rb_tree_color_type color_type;
@@ -414,7 +414,11 @@ __rb_tree_rebalance_for_erase(__rb_tree_node_base* z,
   }
   return y;
 }
-
+/*
+  红黑树
+  Value : key + data
+  KeyOfVal : 怎么根据key取出对应的value
+*/
 template <class Key, class Value, class KeyOfValue, class Compare,
           class Alloc = alloc>
 class rb_tree {
@@ -462,7 +466,7 @@ protected:
 
 protected:
   size_type node_count; // keeps track of size of tree
-  link_type header;  
+  link_type header;  //假根节点
   Compare key_compare;
 
   link_type& root() const { return (link_type&) header->parent; }
@@ -566,7 +570,7 @@ public:
     return const_reverse_iterator(begin());
   } 
   bool empty() const { return node_count == 0; }
-  size_type size() const { return node_count; }
+  size_type size() const { return node_count; } //返回节点个数
   size_type max_size() const { return size_type(-1); }
 
   void swap(rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& t) {
@@ -960,6 +964,7 @@ rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::find(const Key& k) const {
 
 template <class Key, class Value, class KeyOfValue, class Compare, class Alloc>
 typename rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::size_type 
+//返回当前 key 对应的元素个数
 rb_tree<Key, Value, KeyOfValue, Compare, Alloc>::count(const Key& k) const {
   pair<const_iterator, const_iterator> p = equal_range(k);
   size_type n = 0;
