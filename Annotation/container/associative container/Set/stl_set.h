@@ -37,6 +37,11 @@ __STL_BEGIN_NAMESPACE
 #pragma set woff 1174
 #endif
 
+/*
+  set 和 multiset以rb-tree为底层结构,因此有自动排序的特性
+  set 和 multiset 的 key 就是value
+  虽然 br-tree能够通过iterator改变元素的值，然而set和multiset并不支持
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class Compare = less<Key>, class Alloc = alloc>
 #else
@@ -45,20 +50,27 @@ template <class Key, class Compare, class Alloc = alloc>
 class set {
 public:
   // typedefs:
-
+  // key_type 和 value_type都是 Key
   typedef Key key_type;
   typedef Key value_type;
+  
   typedef Compare key_compare;
   typedef Compare value_compare;
 private:
+  /*
+    红黑树 为 底层结构,其中key_type和value指定为同一个
+    keyOfvalue 指定为 identity<value_type>
+  */
   typedef rb_tree<key_type, value_type, 
                   identity<value_type>, key_compare, Alloc> rep_type;
   rep_type t;  // red-black tree representing set
+
 public:
   typedef typename rep_type::const_pointer pointer;
   typedef typename rep_type::const_pointer const_pointer;
   typedef typename rep_type::const_reference reference;
   typedef typename rep_type::const_reference const_reference;
+  //set的迭代器是红黑树的 const迭代器,所以我们不能通过迭代器更改元素
   typedef typename rep_type::const_iterator iterator;
   typedef typename rep_type::const_iterator const_iterator;
   typedef typename rep_type::const_reverse_iterator reverse_iterator;
@@ -111,6 +123,7 @@ public:
   void swap(set<Key, Compare, Alloc>& x) { t.swap(x.t); }
 
   // insert/erase
+  //通过调用 红黑树Insert_unique()实现,而multi_set通过调用insert_equal()实现
   typedef  pair<iterator, bool> pair_iterator_bool; 
   pair<iterator,bool> insert(const value_type& x) { 
     pair<typename rep_type::iterator, bool> p = t.insert_unique(x); 
