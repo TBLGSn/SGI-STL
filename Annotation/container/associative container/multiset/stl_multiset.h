@@ -36,7 +36,10 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-
+/*
+  multiset 借助红黑树实现
+  
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class Compare = less<Key>, class Alloc = alloc>
 #else
@@ -112,6 +115,7 @@ public:
   void swap(multiset<Key, Compare, Alloc>& x) { t.swap(x.t); }
 
   // insert/erase
+  //通过红黑树的insert_equal()实现
   iterator insert(const value_type& x) { 
     return t.insert_equal(x);
   }
