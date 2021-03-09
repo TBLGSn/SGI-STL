@@ -32,11 +32,16 @@
 #define __SGI_STL_HASH_FUN_H
 
 #include <stddef.h>
-
 __STL_BEGIN_NAMESPACE
 
-template <class Key> struct hash { };
+/*
+  散列函数
+  没有为std::string 版本
+*/
 
+//泛化版本
+template <class Key> struct hash { };
+// inline类型, 
 inline size_t __stl_hash_string(const char* s)
 {
   unsigned long h = 0; 
@@ -45,6 +50,7 @@ inline size_t __stl_hash_string(const char* s)
   
   return size_t(h);
 }
+//模板的偏特化 __STL_TEMPLATE_NULL == template<>
 
 __STL_TEMPLATE_NULL struct hash<char*>
 {

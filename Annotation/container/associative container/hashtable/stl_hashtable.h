@@ -46,6 +46,7 @@
 
 __STL_BEGIN_NAMESPACE
 
+//hashtable节点，通过链表的方式处理冲突
 template <class Value>
 struct __hashtable_node
 {
@@ -64,7 +65,9 @@ struct __hashtable_iterator;
 template <class Value, class Key, class HashFcn,
           class ExtractKey, class EqualKey, class Alloc>
 struct __hashtable_const_iterator;
-
+/*
+  hashtable迭代器
+*/
 template <class Value, class Key, class HashFcn,
           class ExtractKey, class EqualKey, class Alloc>
 struct __hashtable_iterator {
@@ -86,7 +89,7 @@ struct __hashtable_iterator {
   typedef Value* pointer;
 
   node* cur;
-  hashtable* ht;
+  hashtable* ht; //当操作冲突链表之后，能够返回hashtable
 
   __hashtable_iterator(node* n, hashtable* tab) : cur(n), ht(tab) {}
   __hashtable_iterator() {}
@@ -157,7 +160,11 @@ inline unsigned long __stl_next_prime(unsigned long n)
   const unsigned long* pos = lower_bound(first, last, n);
   return pos == last ? *(last - 1) : *pos;
 }
-
+/*
+  hashtable 类
+  ExtractKry ：如何解析data
+  EqualKry : 什么叫做相等
+*/
 
 template <class Value, class Key, class HashFcn,
           class ExtractKey, class EqualKey,
@@ -180,15 +187,15 @@ public:
   key_equal key_eq() const { return equals; }
 
 private:
-  hasher hash;
-  key_equal equals;
-  ExtractKey get_key;
+  hasher hash; //模板中的HashFcn
+  key_equal equals; //模板参数中的EqualKey
+  ExtractKey get_key;// 模板中的ExtractKey
 
   typedef __hashtable_node<Value> node;
   typedef simple_alloc<node, Alloc> node_allocator;
 
-  vector<node*,Alloc> buckets;
-  size_type num_elements;
+  vector<node*,Alloc> buckets;//
+  size_type num_elements; //现在有多少元素
 
 public:
   typedef __hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, 
@@ -418,7 +425,7 @@ public:
       {}
     return const_iterator(first, this);
   } 
-
+  
   size_type count(const key_type& key) const
   {
     const size_type n = bkt_num_key(key);
