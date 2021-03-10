@@ -32,25 +32,31 @@
 #define __SGI_STL_INTERNAL_FUNCTION_H
 
 __STL_BEGIN_NAMESPACE
+/*
+  仿函数只为算法服务
 
+  运算类 逻辑运算类 相互比较类
+*/
+// 仿函数可适配的条件: 都应该从下面两者中继承其一,因为Adapter将会对functors"提问"
+//一元
 template <class Arg, class Result>
 struct unary_function {
     typedef Arg argument_type;
     typedef Result result_type;
 };
-
+//二元
 template <class Arg1, class Arg2, class Result>
 struct binary_function {
     typedef Arg1 first_argument_type;
     typedef Arg2 second_argument_type;
     typedef Result result_type;
 };      
-
+//加法
 template <class T>
 struct plus : public binary_function<T, T, T> {
     T operator()(const T& x, const T& y) const { return x + y; }
 };
-
+//减法
 template <class T>
 struct minus : public binary_function<T, T, T> {
     T operator()(const T& x, const T& y) const { return x - y; }
@@ -79,17 +85,17 @@ template <class T>
 struct negate : public unary_function<T, T> {
     T operator()(const T& x) const { return -x; }
 };
-
+//相等
 template <class T>
 struct equal_to : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x == y; }
 };
-
+//不等
 template <class T>
 struct not_equal_to : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x != y; }
 };
-
+//大于
 template <class T>
 struct greater : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x > y; }
@@ -109,7 +115,7 @@ template <class T>
 struct less_equal : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x <= y; }
 };
-
+//逻辑 && 
 template <class T>
 struct logical_and : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x && y; }
@@ -281,7 +287,7 @@ inline pointer_to_binary_function<Arg1, Arg2, Result>
 ptr_fun(Result (*x)(Arg1, Arg2)) {
   return pointer_to_binary_function<Arg1, Arg2, Result>(x);
 }
-
+//选择元素
 template <class T>
 struct identity : public unary_function<T, T> {
   const T& operator()(const T& x) const { return x; }
