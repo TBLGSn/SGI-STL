@@ -142,7 +142,7 @@ public:
     return !pred(x);
   }
 };
-
+//函数适配器 not,执行取反操作
 template <class Predicate>
 inline unary_negate<Predicate> not1(const Predicate& pred) {
   return unary_negate<Predicate>(pred);
