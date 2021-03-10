@@ -185,23 +185,28 @@ public:
   }
 };
 
+// 函数模板能做实参推导，而类不行，所以才进行封装
 template <class Operation, class T>
 inline binder1st<Operation> bind1st(const Operation& op, const T& x) {
-  typedef typename Operation::first_argument_type arg1_type;
-  return binder1st<Operation>(op, arg1_type(x));
+  typedef typename Operation::first_argument_type arg1_type; //对functor"提问"
+  return binder1st<Operation>(op, arg1_type(x));  //隐藏的方式arg1_type(x)进行类型检测. 
 }
-
+/* 函数适配器 binder2nd
+    基础unary_function 的原因是，binder2nd作为整体也需要"回答问题"
+*/
 template <class Operation> 
 class binder2nd
   : public unary_function<typename Operation::first_argument_type,
                           typename Operation::result_type> {
 protected:
-  Operation op;
+  Operation op; //内部参数，储存算式和第二实参
   typename Operation::second_argument_type value;
 public:
+  //构造器
   binder2nd(const Operation& x,
             const typename Operation::second_argument_type& y) 
       : op(x), value(y) {}
+  // 重载 operator(), 函数适配器要表现的像函数一样
   typename Operation::result_type
   operator()(const typename Operation::first_argument_type& x) const {
     return op(x, value); 

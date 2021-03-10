@@ -55,13 +55,13 @@ public:
   typedef typename Sequence::reference reference;
   typedef typename Sequence::const_reference const_reference;
 protected:
-  Sequence c;
+  Sequence c; //内置deque<T>
 public:
   bool empty() const { return c.empty(); }
   size_type size() const { return c.size(); }
   reference top() { return c.back(); }
   const_reference top() const { return c.back(); }
-  void push(const value_type& x) { c.push_back(x); }
+  void push(const value_type& x) { c.push_back(x); } //容器适配器,进行接口的改造
   void pop() { c.pop_back(); }
 };
 
