@@ -32,7 +32,8 @@
 #define __SGI_STL_INTERNAL_ITERATOR_H
 
 __STL_BEGIN_NAMESPACE
-
+//五种迭代器类型,继承关系
+//可以考虑增加迭代器类型，如前进两个位置,实现双指针查找
 struct input_iterator_tag {};
 struct output_iterator_tag {};
 struct forward_iterator_tag : public input_iterator_tag {};
@@ -163,7 +164,7 @@ template <class T, class Distance>
 inline forward_iterator_tag
 iterator_category(const forward_iterator<T, Distance>&) {
   return forward_iterator_tag();
-}
+} 
 
 template <class T, class Distance> 
 inline bidirectional_iterator_tag

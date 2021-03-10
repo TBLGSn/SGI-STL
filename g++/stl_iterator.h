@@ -224,84 +224,88 @@ template <class T>
 inline ptrdiff_t* distance_type(const T*) { return (ptrdiff_t*)(0); }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
-template <class InputIterator, class Distance>
-inline void __distance(InputIterator first, InputIterator last, Distance& n, 
-                       input_iterator_tag) {
-  while (first != last) { ++first; ++n; }
-}
-
-template <class RandomAccessIterator, class Distance>
-inline void __distance(RandomAccessIterator first, RandomAccessIterator last, 
-                       Distance& n, random_access_iterator_tag) {
-  n += last - first;
-}
-
-template <class InputIterator, class Distance>
-inline void distance(InputIterator first, InputIterator last, Distance& n) {
-  __distance(first, last, n, iterator_category(first));
-}
-
-#ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
-
-template <class InputIterator>
-inline iterator_traits<InputIterator>::difference_type
-__distance(InputIterator first, InputIterator last, input_iterator_tag) {
-  iterator_traits<InputIterator>::difference_type n = 0;
-  while (first != last) {
-    ++first; ++n;
+//实现了两个版本的 distance
+  template <class InputIterator, class Distance>
+  inline void __distance(InputIterator first, InputIterator last, Distance& n, 
+                        input_iterator_tag) {
+    while (first != last) { ++first; ++n; }
   }
-  return n;
-}
+  //为随机访问器提供特色版本,性能差距较大
+  template <class RandomAccessIterator, class Distance>
+  inline void __distance(RandomAccessIterator first, RandomAccessIterator last, 
+                        Distance& n, random_access_iterator_tag) {
+    n += last - first;
+  }
+  //版本一
+  template <class InputIterator, class Distance>
+  inline void distance(InputIterator first, InputIterator last, Distance& n) {
+    __distance(first, last, n, iterator_category(first));
+  }
 
-template <class RandomAccessIterator>
-inline iterator_traits<RandomAccessIterator>::difference_type
-__distance(RandomAccessIterator first, RandomAccessIterator last,
-           random_access_iterator_tag) {
-  return last - first;
-}
-
-template <class InputIterator>
-inline iterator_traits<InputIterator>::difference_type
-distance(InputIterator first, InputIterator last) {
-  typedef typename iterator_traits<InputIterator>::iterator_category category;
-  return __distance(first, last, category());
-}
+  #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
+  /*
+    注意理解是如何提供特化版本的，
+    并不能通过模板的参数区别不同的版本,因为这并不是模板的特化.(模板参数本质上跟声明为 T 没什么不同)
+    这里是根据函数的参数不同，以区分的 input_iterator_tag 和 random_access_iterator_tag
+  */
+  template <class InputIterator>
+  inline iterator_traits<InputIterator>::difference_type
+  __distance(InputIterator first, InputIterator last, input_iterator_tag) {
+    iterator_traits<InputIterator>::difference_type n = 0;
+    while (first != last) {
+      ++first; ++n;
+    }
+    return n;
+  }
+  //随机迭代器的特色版本
+  template <class RandomAccessIterator>
+  inline iterator_traits<RandomAccessIterator>::difference_type
+  __distance(RandomAccessIterator first, RandomAccessIterator last,
+            random_access_iterator_tag) {
+    return last - first;
+  }
+  //版本二
+  template <class InputIterator>
+  inline iterator_traits<InputIterator>::difference_type
+  distance(InputIterator first, InputIterator last) {
+    typedef typename iterator_traits<InputIterator>::iterator_category category;
+    return __distance(first, last, category()); //萃取器得到类型,生成一个临时对象
+  }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
-template <class InputIterator, class Distance>
-inline void __advance(InputIterator& i, Distance n, input_iterator_tag) {
-  while (n--) ++i;
-}
-
-#if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
-#pragma set woff 1183
-#endif
-
-template <class BidirectionalIterator, class Distance>
-inline void __advance(BidirectionalIterator& i, Distance n, 
-                      bidirectional_iterator_tag) {
-  if (n >= 0)
+//实现advance,实现指针前进n个距离
+  template <class InputIterator, class Distance>
+  inline void __advance(InputIterator& i, Distance n, input_iterator_tag) {
     while (n--) ++i;
-  else
-    while (n++) --i;
-}
+  }
 
-#if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
-#pragma reset woff 1183
-#endif
+  #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
+  #pragma set woff 1183
+  #endif
+  //特化版本,双向移动迭代器
+  template <class BidirectionalIterator, class Distance>
+  inline void __advance(BidirectionalIterator& i, Distance n, 
+                        bidirectional_iterator_tag) {
+    if (n >= 0)
+      while (n--) ++i;
+    else
+      while (n++) --i;
+  }
 
-template <class RandomAccessIterator, class Distance>
-inline void __advance(RandomAccessIterator& i, Distance n, 
-                      random_access_iterator_tag) {
-  i += n;
-}
+  #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
+  #pragma reset woff 1183
+  #endif
+  //特化，随机移动迭代器
+  template <class RandomAccessIterator, class Distance>
+  inline void __advance(RandomAccessIterator& i, Distance n, 
+                        random_access_iterator_tag) {
+    i += n;
+  }
 
-template <class InputIterator, class Distance>
-inline void advance(InputIterator& i, Distance n) {
-  __advance(i, n, iterator_category(i));
-}
+  template <class InputIterator, class Distance>
+  inline void advance(InputIterator& i, Distance n) {
+    __advance(i, n, iterator_category(i)); 
+  }
 
 template <class Container>
 class back_insert_iterator {

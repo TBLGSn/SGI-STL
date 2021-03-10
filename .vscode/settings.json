@@ -11,6 +11,8 @@
         "list": "cpp",
         "algorithm": "cpp",
         "memory": "cpp",
-        "numeric": "cpp"
+        "numeric": "cpp",
+        "iterator": "cpp",
+        "functional": "cpp"
     }
 }
