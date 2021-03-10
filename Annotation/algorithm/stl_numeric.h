@@ -33,7 +33,7 @@
 #define __SGI_STL_INTERNAL_NUMERIC_H
 
 __STL_BEGIN_NAMESPACE
-
+//将元素"累计"到初值 init 上
 template <class InputIterator, class T>
 T accumulate(InputIterator first, InputIterator last, T init) {
   for ( ; first != last; ++first)

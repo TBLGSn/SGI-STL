@@ -72,7 +72,7 @@ inline const T& __median(const T& a, const T& b, const T& c, Compare comp) {
   else
     return b;
 }
-
+//为每一个元素执行一个动作(function)
 template <class InputIterator, class Function>
 Function for_each(InputIterator first, InputIterator last, Function f) {
   for ( ; first != last; ++first)
@@ -80,6 +80,10 @@ Function for_each(InputIterator first, InputIterator last, Function f) {
   return f;
 }
 
+/*
+  查找 ，关联性容器(包括无序）有内置更快的做法.
+  因为根本的底层结构不同
+*/
 template <class InputIterator, class T>
 InputIterator find(InputIterator first, InputIterator last, const T& value) {
   while (first != last && *first != value) ++first;
@@ -115,7 +119,7 @@ ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last,
   }
   return last;
 }
-
+//记数 等于 value 的个数 ,set(multi),map(multi)自带的有count函数
 template <class InputIterator, class T, class Size>
 void count(InputIterator first, InputIterator last, const T& value,
            Size& n) {
@@ -123,7 +127,7 @@ void count(InputIterator first, InputIterator last, const T& value,
     if (*first == value)
       ++n;
 }
-
+//满足条件 pred的个数
 template <class InputIterator, class Predicate, class Size>
 void count_if(InputIterator first, InputIterator last, Predicate pred,
               Size& n) {
@@ -320,21 +324,21 @@ OutputIterator transform(InputIterator1 first1, InputIterator1 last1,
     *result = binary_op(*first1, *first2);
   return result;
 }
-
+//用新值替代旧值
 template <class ForwardIterator, class T>
 void replace(ForwardIterator first, ForwardIterator last, const T& old_value,
              const T& new_value) {
   for ( ; first != last; ++first)
     if (*first == old_value) *first = new_value;
 }
-
+//如果满足Pred，则用新值覆盖
 template <class ForwardIterator, class Predicate, class T>
 void replace_if(ForwardIterator first, ForwardIterator last, Predicate pred,
                 const T& new_value) {
   for ( ; first != last; ++first)
     if (pred(*first)) *first = new_value;
 }
-
+//范围内所有等同于 旧值 都以新值取代，，不符合者原值放入新区间
 template <class InputIterator, class OutputIterator, class T>
 OutputIterator replace_copy(InputIterator first, InputIterator last,
                             OutputIterator result, const T& old_value,
@@ -1043,7 +1047,7 @@ void __introsort_loop(RandomAccessIterator first,
     last = cut;
   }
 }
-
+//关联容器没有这个函数,因为自身有序
 template <class RandomAccessIterator>
 inline void sort(RandomAccessIterator first, RandomAccessIterator last) {
   if (first != last) {
@@ -1742,7 +1746,7 @@ equal_range(ForwardIterator first, ForwardIterator last, const T& value,
   return __equal_range(first, last, value, comp, distance_type(first),
                        iterator_category(first));
 }    
-
+//借助lower_bound实现二分查找
 template <class ForwardIterator, class T>
 bool binary_search(ForwardIterator first, ForwardIterator last,
                    const T& value) {
