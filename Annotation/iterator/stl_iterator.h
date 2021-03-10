@@ -526,12 +526,17 @@ inline bool operator==(
 //  reverse_bidirectional_iterator is no longer part of the draft
 //  standard, but it is retained for backward compatibility.
 
+/*
+  迭代器适配器
+  跟容器适配器和函数适配器一样，都选择"组件"的方式
+*/
 template <class Iterator>
 class reverse_iterator 
 {
 protected:
-  Iterator current;
+  Iterator current; //对应的正向迭代器
 public:
+  // 五种类型
   typedef typename iterator_traits<Iterator>::iterator_category
           iterator_category;
   typedef typename iterator_traits<Iterator>::value_type
@@ -543,8 +548,8 @@ public:
   typedef typename iterator_traits<Iterator>::reference
           reference;
 
-  typedef Iterator iterator_type;
-  typedef reverse_iterator<Iterator> self;
+  typedef Iterator iterator_type; //代表正向迭代器
+  typedef reverse_iterator<Iterator> self; //代表逆向迭代器
 
 public:
   reverse_iterator() {}
@@ -556,17 +561,17 @@ public:
   reverse_iterator(const reverse_iterator<Iter>& x) : current(x.current) {}
 #endif /* __STL_MEMBER_TEMPLATES */
     
-  iterator_type base() const { return current; }
+  iterator_type base() const { return current; } //取出正向迭代器
   reference operator*() const {
     Iterator tmp = current;
-    return *--tmp;
+    return *--tmp; //逆向迭代器就是正向迭代器退一步取值
   }
 #ifndef __SGI_STL_NO_ARROW_OPERATOR
   pointer operator->() const { return &(operator*()); }
 #endif /* __SGI_STL_NO_ARROW_OPERATOR */
 
   self& operator++() {
-    --current;
+    --current; //逆向++等于正向--
     return *this;
   }
   self operator++(int) {
