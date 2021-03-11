@@ -386,7 +386,10 @@ template <class Container>
 inline front_insert_iterator<Container> front_inserter(Container& x) {
   return front_insert_iterator<Container>(x);
 }
-
+/*
+  这个adapter 将iterator的赋值操作改变为安插操作,并将iterator右移一个位置
+  表面assgin，而实际上是 insert
+*/
 template <class Container>
 class insert_iterator {
 protected:
@@ -401,7 +404,7 @@ public:
 
   insert_iterator(Container& x, typename Container::iterator i) 
     : container(&x), iter(i) {}
-  insert_iterator<Container>&
+  insert_iterator<Container>&  //关键所在,重载操作符 *result = *frist，将变为插入操作，而不是赋值
   operator=(const typename Container::value_type& value) { 
     iter = container->insert(iter, value);
     ++iter;
@@ -422,7 +425,7 @@ iterator_category(const insert_iterator<Container>&)
 }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
+// 辅助函数,帮助用户使用
 template <class Container, class Iterator>
 inline insert_iterator<Container> inserter(Container& x, Iterator i) {
   typedef typename Container::iterator iter;
