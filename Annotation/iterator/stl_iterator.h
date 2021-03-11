@@ -815,7 +815,9 @@ inline bool operator==(const istream_iterator<T, Distance>& x,
   return x.stream == y.stream && x.end_marker == y.end_marker ||
          x.end_marker == false && y.end_marker == false;
 }
-
+/*
+  ostream适配器，不属于三种适配器中的一种
+*/
 template <class T>
 class ostream_iterator {
 protected:
@@ -835,6 +837,7 @@ public:
     if (string) *stream << string;
     return *this;
   }
+  //返回*this?
   ostream_iterator<T>& operator*() { return *this; }
   ostream_iterator<T>& operator++() { return *this; } 
   ostream_iterator<T>& operator++(int) { return *this; } 
