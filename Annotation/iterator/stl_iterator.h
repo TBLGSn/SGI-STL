@@ -752,7 +752,9 @@ operator+(Dist n, const reverse_iterator<RandomAccessIter, T, Ref, Dist>& x) {
 }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
+/*
+  isstream 适配器
+*/
 template <class T, class Distance = ptrdiff_t> 
 class istream_iterator {
   friend bool
