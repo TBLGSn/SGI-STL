@@ -49,14 +49,16 @@ template <class T> inline void copy(T* source,T* destination,int n) {
    copy(source,destination,n,typename __type_traits<T>::has_trivial_copy_constructor());
 }
 */
-
-
+/*
+   属于SGI,并不属于 STL,负责萃取 类型(不是迭代器)的 type 特性
+*/
+//用类型表示“真假”,而不是 bool 类型
 struct __true_type {
 };
 
 struct __false_type {
 };
-//泛化
+//泛化版本
 template <class type>
 struct __type_traits { 
    typedef __true_type     this_dummy_member_must_be_first;
@@ -76,7 +78,7 @@ struct __type_traits {
           - Members you add will be treated like regular members unless
             you add the appropriate support in the compiler. */
  
-
+   //所有的内嵌类型 都是 _false_type
    typedef __false_type    has_trivial_default_constructor; //默认构造器不重要
    typedef __false_type    has_trivial_copy_constructor;
    typedef __false_type    has_trivial_assignment_operator;
@@ -89,7 +91,7 @@ struct __type_traits {
 // Provide some specializations.  This is harmless for compilers that
 //  have built-in __types_traits support, and essential for compilers
 //  that don't.
-//特化
+// char特化
 __STL_TEMPLATE_NULL struct __type_traits<char> {
    typedef __true_type    has_trivial_default_constructor;
    typedef __true_type    has_trivial_copy_constructor;

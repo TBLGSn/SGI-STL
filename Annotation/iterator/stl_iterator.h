@@ -27,7 +27,10 @@
 /* NOTE: This is an internal header file, included by other STL headers.
  *   You should not attempt to use it directly.
  */
-
+/*
+  STL 的中心思想，是将数据结构(containers)和算法(algorithms)分开,彼此独立设计，而用
+  迭代器 iterator 充当两者之间的 “胶粘剂”
+*/
 #ifndef __SGI_STL_INTERNAL_ITERATOR_H
 #define __SGI_STL_INTERNAL_ITERATOR_H
 
@@ -81,7 +84,9 @@ template <class T, class Distance> struct random_access_iterator {
   typedef T&                         reference;
 };
 
-//迭代器
+/*
+  迭代器类
+*/
 #ifdef __STL_USE_NAMESPACES
 template <class Category, class T, class Distance = ptrdiff_t,
           class Pointer = T*, class Reference = T&>
@@ -103,10 +108,10 @@ struct iterator {
 #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
 template <class Iterator>
 struct iterator_traits {
-  typedef typename Iterator::iterator_category iterator_category;
-  typedef typename Iterator::value_type        value_type;
-  typedef typename Iterator::difference_type   difference_type;
-  typedef typename Iterator::pointer           pointer;
+  typedef typename Iterator::iterator_category iterator_category;//迭代器的类型
+  typedef typename Iterator::value_type        value_type; //迭代器所指对象的类型
+  typedef typename Iterator::difference_type   difference_type;//表示两个迭代器之间的距离
+  typedef typename Iterator::pointer           pointer;// typedef int ptrdiff_t;
   typedef typename Iterator::reference         reference;
 };
 //偏特化，传入的是指针时，使用这个版本
@@ -118,7 +123,7 @@ struct iterator_traits<T*> {
   typedef T*                         pointer;
   typedef T&                         reference;
 };
-
+// const 指针 特化版本
 template <class T>
 struct iterator_traits<const T*> {
   typedef random_access_iterator_tag iterator_category;
@@ -232,7 +237,9 @@ template <class T>
 inline ptrdiff_t* distance_type(const T*) { return (ptrdiff_t*)(0); }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
+/*
+  返回迭代器之间的距离
+*/
 template <class InputIterator, class Distance>
 inline void __distance(InputIterator first, InputIterator last, Distance& n, 
                        input_iterator_tag) {
@@ -277,7 +284,10 @@ distance(InputIterator first, InputIterator last) {
 }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
+/*
+   迭代器 前进 n 步
+*/
+//input 迭代器版本 (forward 迭代器也是用的这个版本)
 template <class InputIterator, class Distance>
 inline void __advance(InputIterator& i, Distance n, input_iterator_tag) {
   while (n--) ++i;
@@ -286,7 +296,7 @@ inline void __advance(InputIterator& i, Distance n, input_iterator_tag) {
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1183
 #endif
-
+//双向迭代器版本
 template <class BidirectionalIterator, class Distance>
 inline void __advance(BidirectionalIterator& i, Distance n, 
                       bidirectional_iterator_tag) {
@@ -299,7 +309,7 @@ inline void __advance(BidirectionalIterator& i, Distance n,
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma reset woff 1183
 #endif
-
+//随机迭代器版本
 template <class RandomAccessIterator, class Distance>
 inline void __advance(RandomAccessIterator& i, Distance n, 
                       random_access_iterator_tag) {
@@ -308,6 +318,7 @@ inline void __advance(RandomAccessIterator& i, Distance n,
 
 template <class InputIterator, class Distance>
 inline void advance(InputIterator& i, Distance n) {
+    //通过 traits ,调用不同版本的_advance()
   __advance(i, n, iterator_category(i));
 }
 
