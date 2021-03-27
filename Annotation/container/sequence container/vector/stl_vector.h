@@ -37,12 +37,16 @@ __STL_BEGIN_NAMESPACE
 #pragma set woff 1174
 #endif
 /*
+  多数的容器都通过 “内含一个其他的容器”实现。
+
   vector最应该担心的是空间的“扩容问题”，当当前空间不够用时，我们不得不进行扩容操作
   会调用大量的 copy 构造函数，和析解函数
 */
 template <class T, class Alloc = alloc>
 class vector {
+
 public:
+  //类型定义
   typedef T value_type;
   typedef value_type* pointer;
   typedef const value_type* const_pointer;
@@ -63,8 +67,14 @@ public:
           reverse_iterator;
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
 protected:
-  typedef simple_alloc<value_type, Alloc> data_allocator;
-  //三个指针完成对于vector的实现
+  typedef simple_alloc<value_type, Alloc> data_allocator; //空间配置器
+  
+  /*
+    三个指针完成对于vector的实现
+    start ：空间的头
+    finish : 空间的尾
+    end_of_storage : 表示目前空间的尾
+  */
   iterator start;
   iterator finish;
   iterator end_of_storage;
@@ -73,7 +83,7 @@ protected:
   void deallocate() {
     if (start) data_allocator::deallocate(start, end_of_storage - start);
   }
-
+  // 填充并初始化
   void fill_initialize(size_type n, const T& value) {
     start = allocate_and_fill(n, value);
     finish = start + n;
@@ -84,6 +94,7 @@ public:
   const_iterator begin() const { return start; }
   iterator end() { return finish; }
   const_iterator end() const { return finish; }
+  
   reverse_iterator rbegin() { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const { 
     return const_reverse_iterator(end()); 
@@ -127,7 +138,7 @@ public:
   }
 #endif /* __STL_MEMBER_TEMPLATES */
   ~vector() { 
-    destroy(start, finish);
+    destroy(start, finish); //全局函数
     deallocate();
   }
   vector<T, Alloc>& operator=(const vector<T, Alloc>& x);
@@ -215,6 +226,7 @@ public:
   void clear() { erase(begin(), end()); }
 
 protected:
+  //配置，而后填充
   iterator allocate_and_fill(size_type n, const T& x) {
     iterator result = data_allocator::allocate(n);
     __STL_TRY {
@@ -325,8 +337,9 @@ vector<T, Alloc>& vector<T, Alloc>::operator=(const vector<T, Alloc>& x) {
 }
 
 template <class T, class Alloc>
+  //一旦引起内存的重新配置，则原来所有的迭代器都失效了
 void vector<T, Alloc>::insert_aux(iterator position, const T& x) {
-  if (finish != end_of_storage) {
+  if (finish != end_of_storage) { //还有剩余空间
     construct(finish, *(finish - 1));
     ++finish;
     T x_copy = x;
