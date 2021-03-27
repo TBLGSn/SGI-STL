@@ -3,10 +3,11 @@
 ## 简介
     stack实现了一个 LIFO 结构。
     你可以使用 push() 将任意元素放入到stack中，也可以用 pop() 将任意的元素从容器中移除，也可以通过 top() 取得栈顶的元素。
-![ss](stack-1.png)
+![ss](stack-1.PNG?raw=trueg)
 
 ## 实现方式
-    Stack的实现是通过内置一个 deque<T>实现的。之所以选择 deque,而不是vector，是因为:deque移除元素时，会释放内，并且，不需要在重分配时复制全部元素。
+    Stack的实现是通过内置一个 deque<T>实现的。之所以选择 deque,而不是vector，是因为:deque移除元素时，会释放内存，
+    并且不需要在重分配时复制全部元素。
 
     通过容器适配器对deque的接口进行改造。
 
