@@ -26,7 +26,6 @@
 // in ANSI X3J16/94-0013R2.
 
 extern "C++" {
-  
 template <class charT, class traits, class Allocator>
 inline void * basic_string <charT, traits, Allocator>::Rep::
 operator new (size_t s, size_t extra)
@@ -112,7 +111,9 @@ alloc (basic_string::size_type size, bool save)
 
   repup (p);
 }
-
+/*
+  
+*/
 template <class charT, class traits, class Allocator>
 basic_string <charT, traits, Allocator>&
 basic_string <charT, traits, Allocator>::

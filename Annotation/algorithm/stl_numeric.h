@@ -31,7 +31,9 @@
 
 #ifndef __SGI_STL_INTERNAL_NUMERIC_H
 #define __SGI_STL_INTERNAL_NUMERIC_H
-
+/*
+  数值算法
+*/
 __STL_BEGIN_NAMESPACE
 //将元素"累计"到初值 init 上
 template <class InputIterator, class T>

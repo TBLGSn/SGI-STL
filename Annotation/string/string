@@ -1,0 +1,14 @@
+// Main header for the -*- C++ -*- string classes.
+
+#ifndef __STRING__
+#define __STRING__
+
+#include <std/bastring.h>
+
+extern "C++" {
+    // string 类型为basic_string
+    typedef basic_string <char> string; 
+//typedef basic_string <wchar_t> wstring;
+} // extern "C++"
+
+#endif

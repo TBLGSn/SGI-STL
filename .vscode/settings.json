@@ -13,6 +13,18 @@
         "memory": "cpp",
         "numeric": "cpp",
         "iterator": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "cstddef": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "atomic": "cpp",
+        "complex": "cpp",
+        "memory_resource": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "tuple": "cpp"
     }
 }
