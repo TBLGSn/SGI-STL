@@ -37,7 +37,7 @@ __STL_BEGIN_NAMESPACE
 #pragma set woff 1174
 #endif
 
-//单个节点，4.9版本不在使用void指针 
+//单个节点，4.9版本不再使用void指针 
 template <class T>
 struct __list_node {
   typedef void* void_pointer;
@@ -45,13 +45,15 @@ struct __list_node {
   void_pointer prev;
   T data;
 };
-/*链表迭代器的“基结构”,4.9版本只有一个参数即可
+/*
+链表迭代器的“基结构”,4.9版本只有一个参数即可
   template <class T> 
   struct __list_iterator{
     typedef T* pointer;
     typedef T& reference;
-    ....
-  }
+    ...
+}
+迭代器的类型不再像 vector 一样是一个指针类型.，而是一个类
 */
 template<class T, class Ref, class Ptr>
 struct __list_iterator {
@@ -59,16 +61,16 @@ struct __list_iterator {
   typedef __list_iterator<T, const T&, const T*> const_iterator;
   typedef __list_iterator<T, Ref, Ptr>           self;
   // 五种iterator必须提供五种types
-  typedef bidirectional_iterator_tag iterator_category;//迭代器的方向
+  typedef bidirectional_iterator_tag iterator_category;//双向迭代器类型
   typedef T value_type; //迭代器类型
   typedef Ptr pointer;
   typedef Ref reference;
-  typedef ptrdiff_t difference_type;//两个literator之间的距离
+  typedef ptrdiff_t difference_type;
 
   typedef __list_node<T>* link_type; 
   typedef size_t size_type;
 
-  link_type node; //指针
+  link_type node; //指针,指向 list 的节点
 
   __list_iterator(link_type x) : node(x) {}
   __list_iterator() {}
@@ -76,8 +78,9 @@ struct __list_iterator {
 
   bool operator==(const self& x) const { return node == x.node; }
   bool operator!=(const self& x) const { return node != x.node; }
+  
+  //重写 operator() 和 operator->
   reference operator*() const { return (*node).data; } //reference == T&
-
 #ifndef __SGI_STL_NO_ARROW_OPERATOR
   pointer operator->() const { return &(operator*()); }
 #endif /* __SGI_STL_NO_ARROW_OPERATOR */
@@ -86,10 +89,10 @@ struct __list_iterator {
     node = (link_type)((*node).next);
     return *this;
   }
-  //返回类型为self&阻止了 出现 i++++ 的情况
-  self operator++(int) { //++i
+  //返回类型不是为self&阻止了 出现 i++++ 的情况
+  self operator++(int) { //i++
     self tmp = *this; //调用拷贝构造函数，而不是重载之后的operator*()
-    ++*this; //调用 operator++() 而不是
+    ++*this; //调用 operator++() 
     return tmp; //赋值构造器
   }
   self& operator--() { 
@@ -125,7 +128,10 @@ distance_type(const __list_iterator<T, Ref, Ptr>&) {
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
 
-// list主类，使用alloc作为默认配置器
+/*
+  list主类，使用alloc作为默认配置器
+  默认实现为环状双向链表
+*/
 template <class T, class Alloc = alloc>
 class list {
 protected:
@@ -157,8 +163,11 @@ public:
   difference_type>
   reverse_iterator; 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
+  
 protected:
+  /*
+    内存管理、分别表示 配置、释放、构造、销毁一个节点
+  */
   link_type get_node() { return list_node_allocator::allocate(); }
   void put_node(link_type p) { list_node_allocator::deallocate(p); }
 
@@ -177,6 +186,7 @@ protected:
 
 protected:
   void empty_initialize() { 
+    //没有对节点 data 部分赋值
     node = get_node();
     node->next = node;
     node->prev = node;
@@ -220,11 +230,12 @@ protected:
   link_type node; // 一个指向节点的指针
 
 public:
+  //默认头节点
   list() { empty_initialize(); }
-
+  //头节点的存在、返回头节点的下一个元素
   iterator begin() { return (link_type)((*node).next); } //因为使用的是void*，所以需要执行强制类型转换
   const_iterator begin() const { return (link_type)((*node).next); }
-  iterator end() { return node; }// 链表会有一个假节点
+  iterator end() { return node; }// 返回头结点
   const_iterator end() const { return node; }
   reverse_iterator rbegin() { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const { 
@@ -270,7 +281,9 @@ public:
   void insert(iterator pos, long n, const T& x) {
     insert(pos, (size_type)n, x);
   }
-
+  /*
+    list 的元素操作
+  */
   void push_front(const T& x) { insert(begin(), x); }
   void push_back(const T& x) { insert(end(), x); }
   iterator erase(iterator position) {
@@ -318,6 +331,7 @@ public:
   list<T, Alloc>& operator=(const list<T, Alloc>& x);
 
 protected:
+  //迁移操作,将连续范围内的元素迁移到某一个位置
   void transfer(iterator position, iterator first, iterator last) {
     if (position != last) {
       (*(link_type((*last.node).prev))).next = position.node;
