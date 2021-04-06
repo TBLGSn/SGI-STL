@@ -33,7 +33,8 @@
 
 __STL_BEGIN_NAMESPACE
 /*
-  通过deque<T>实现
+  与 stack 实现类似.
+  通过deque<T>实现，同样没有提供遍历操作
 */
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class T, class Sequence = deque<T> >
