@@ -13,7 +13,9 @@
 
     只要提供back()、push_back()、pop_back(),你就可以使用任意的sequence容器支持 stack。
 
-    没有提供迭代器，所以算法并不能作用于该容器??
+    没有提供迭代器，所以算法并不能作用于该容器?? 
+	所以只提供了value_type、size_type、reference、const_reference四种类型。
+	operator == 与 < 为什么是 friend？
 ## mini stack
 ```c++
 template <typename T, typename Container = deque<T> >
