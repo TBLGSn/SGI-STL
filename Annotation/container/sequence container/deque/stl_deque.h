@@ -86,15 +86,25 @@ __STL_BEGIN_NAMESPACE
 #endif
 
 // Note: this function is simply a kludge to work around several compilers'
-//  bugs in handling constant expressions.
+//  bugs in handling constant expressions
 inline size_t __deque_buf_size(size_t n, size_t sz)
 {
   return n != 0 ? n : (sz < 512 ? size_t(512 / sz) : size_t(1));
 }
 
-//deque的迭代器
-#ifndef __STL_NON_TYPE_TMPL_PARAM_BUG
+/*
+*     deque的迭代器 (一种Ramdon Access Iterator),并不是用的raw 指针的方式，而是设计成类的形式，
+*   究其原因在于 deque 的空间管理方式, 并不同vector一样.deque 要提供两端
+*   进出的能力，很显然基于性能的考虑，得有其独特的内存管理饭方式.
+*   事实上deque的内存管理，是通过分段的空间来模拟“连续”的空间(为其提供连续的空间).
+*   一旦有必要，则在 deque 的前端或尾端增加新的空间.
+*   避免了(如果同vector一样的)“重新配置、复杂、释放”，代价则是复杂的迭代器架构.
+*/
 
+#ifndef __STL_NON_TYPE_TMPL_PARAM_BUG
+/*
+  
+*/
 template <class T, class Ref, class Ptr, size_t BufSiz>
 struct __deque_iterator {
   typedef __deque_iterator<T, T&, T*, BufSiz>             iterator;
@@ -107,21 +117,22 @@ struct __deque_iterator {
   typedef __deque_iterator<T, const T&, const T*> const_iterator;
   static size_t buffer_size() {return __deque_buf_size(0, sizeof(T)); }
 #endif
-
-  typedef random_access_iterator_tag iterator_category; //随机访问迭代器
+  //未继承 std::iterator 所以必须自行撰写五个必要的迭代器相应类型
+  typedef random_access_iterator_tag iterator_category; //随机访问
   typedef T value_type;
   typedef Ptr pointer;
   typedef Ref reference;
-  typedef size_t size_type;
   typedef ptrdiff_t difference_type;
+
+  typedef size_t size_type;
   typedef T** map_pointer;
 
   typedef __deque_iterator self;
 
-  //Data
-  T* cur;
-  T* first; 
-  T* last;
+  //保持与容器的联结
+  T* cur;   // 指向当前元素（在当前缓冲区, 对于头迭代器指向 deque逻辑上的头元素 || 对于尾迭代器指向 deque逻辑上的尾元素）
+  T* first; //缓存区头部
+  T* last;  //缓存区尾部
   map_pointer node; //T**指向控制中心中的元素
 
   __deque_iterator(T* x, map_pointer y) 
@@ -142,23 +153,23 @@ struct __deque_iterator {
   }
 
   self& operator++() {
-    ++cur;
+    ++cur;  //切换到下一个元素
     if (cur == last) { //到达buffer边界
-      set_node(node + 1);
-      cur = first;
+      set_node(node + 1);//就切换新缓冲区(node的后一个节点)
+      cur = first;  //的第一个元素
     }
     return *this; 
   }
   self operator++(int)  {
     self tmp = *this;
-    ++*this; //后++调用前++
+    ++*this;  //后++调用前++
     return tmp;
   }
 
   self& operator--() {
-    if (cur == first) {
-      set_node(node - 1);
-      cur = last;
+    if (cur == first) {//如果已经到达所在缓冲区的头部
+      set_node(node - 1);//切换到新缓冲区(node的前一个节点)
+      cur = last;       //的最后的一个元素
     }
     --cur;
     return *this;
@@ -168,7 +179,10 @@ struct __deque_iterator {
     --*this;
     return tmp;
   }
-  //为什么不调用 n 次 ++ ？
+/*  实现随机存取，迭代器可以直接跳跃 n 个距离
+ * //为什么不调用 n 次 ++ ？ 
+ */
+  
   self& operator+=(difference_type n) {
     difference_type offset = n + (cur - first);
 
@@ -187,7 +201,7 @@ struct __deque_iterator {
 
   self operator+(difference_type n) const {
     self tmp = *this;
-    return tmp += n;
+    return tmp += n; //调用 operator +=
   }
 
   self& operator-=(difference_type n) { return *this += -n; } //调用 +=
@@ -196,7 +210,7 @@ struct __deque_iterator {
     self tmp = *this;
     return tmp -= n; 
   }
-
+  //调用 operator* 和 operator+ 
   reference operator[](difference_type n) const { return *(*this + n); }
 
   bool operator==(const self& x) const { return cur == x.cur; }
@@ -204,7 +218,7 @@ struct __deque_iterator {
   bool operator<(const self& x) const {
     return (node == x.node) ? (cur < x.cur) : (node < x.node);
   }
-  
+  // 用来跳一个缓冲区
   void set_node(map_pointer new_node) {
     node = new_node;
     first = *new_node;
@@ -257,8 +271,9 @@ inline ptrdiff_t* distance_type(const __deque_iterator<T, Ref, Ptr>&) {
 //  constant expressions.
 /*
   deque的具体实现很复杂，需要详细分析理解
-  精华部分在于 1. 迭代器如何模拟连续空间
-    2. deque类如何管理空间(对于buffer个数的维护)
+  精华部分在于 :
+      1. 迭代器如何模拟连续空间(动态分段连续空间组合而成)
+      2. deque类如何管理空间(对于buffer个数的维护)
 */
 //BufSize : 每一个buffer的大小
 template <class T, class Alloc = alloc, size_t BufSiz = 0> 
@@ -294,9 +309,11 @@ public:                         // Iterators
 
 protected:                      // Internal typedefs
   typedef pointer* map_pointer;
+  //空间配置器，每次配置一个元素的大小
   typedef simple_alloc<value_type, Alloc> data_allocator;
+  //空间配置器、每次配置一个指针的大小
   typedef simple_alloc<pointer, Alloc> map_allocator;
-
+  //决定缓冲区的大小
   static size_type buffer_size() {
     return __deque_buf_size(BufSiz, sizeof(value_type));
   }
@@ -311,8 +328,8 @@ protected:                      // Data members
   //后指针,原理同上  
   iterator finish;  
 
-  map_pointer map;  //控制中心 T**类型，其中的元素(T*类型)指向一个个buffer
-  size_type map_size; //控制中心的大小
+  map_pointer map;    //控制中心,T**类型，其中的元素(T*类型)指向一个个buffer
+  size_type map_size; //控制中心的大小(指针数目)
 
 public:                         // Basic accessors
   iterator begin() { return start; }
@@ -340,6 +357,7 @@ public:                         // Basic accessors
     --tmp; //迭代器重载-- 
     return *tmp;
   }
+  //调用_deque_iterator<>::operator*
   const_reference front() const { return *start; }
   const_reference back() const {
     const_iterator tmp = finish;
@@ -798,11 +816,14 @@ void deque<T, Alloc, BufSize>::clear() {
 
   finish = start;
 }
-
+/*
+  安排好 deque 的结构
+*/
 template <class T, class Alloc, size_t BufSize>
 void deque<T, Alloc, BufSize>::create_map_and_nodes(size_type num_elements) {
+  // 元素的个数/每一个缓冲区可容纳的元素个数 + 1
   size_type num_nodes = num_elements / buffer_size() + 1;
-
+  //一个 map 要管理几个节点，最少 8 个，最多是“所需节点数加2”
   map_size = max(initial_map_size(), num_nodes + 2);
   map = map_allocator::allocate(map_size);
 
@@ -841,12 +862,14 @@ void deque<T, Alloc, BufSize>::destroy_map_and_nodes() {
 template <class T, class Alloc, size_t BufSize>
 void deque<T, Alloc, BufSize>::fill_initialize(size_type n,
                                                const value_type& value) {
-  create_map_and_nodes(n);
+  create_map_and_nodes(n);//把 deque 的结构都产生并安排好
   map_pointer cur;
   __STL_TRY {
+    //为每一个节点的缓冲区设定初值
     for (cur = start.node; cur < finish.node; ++cur)
       uninitialized_fill(*cur, *cur + buffer_size(), value);
-    uninitialized_fill(finish.first, finish.cur, value);
+      //最后一个节点的设定稍有不同（因为尾端可能有备用空间，不必设初值）
+      uninitialized_fill(finish.first, finish.cur, value);
   }
 #       ifdef __STL_USE_EXCEPTIONS
   catch(...) {
