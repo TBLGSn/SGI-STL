@@ -25,6 +25,8 @@
         "memory_resource": "cpp",
         "optional": "cpp",
         "system_error": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
     }
 }
