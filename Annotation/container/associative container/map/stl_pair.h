@@ -40,6 +40,8 @@ struct pair {
 
   T1 first;
   T2 second;
+  //不是 pair() : first(T1, second(T2) {}
+   
   pair() : first(T1()), second(T2()) {}
   pair(const T1& a, const T2& b) : first(a), second(b) {}
 
