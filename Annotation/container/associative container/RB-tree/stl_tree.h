@@ -63,45 +63,46 @@ __STL_BEGIN_NAMESPACE
 typedef bool __rb_tree_color_type;
 const __rb_tree_color_type __rb_tree_red = false;
 const __rb_tree_color_type __rb_tree_black = true;
-//红黑树节点
+//红黑树基节点
 struct __rb_tree_node_base
 {
   typedef __rb_tree_color_type color_type;
   typedef __rb_tree_node_base* base_ptr;
 
-  color_type color; 
-  base_ptr parent;
-  base_ptr left;
-  base_ptr right;
+  color_type color; //颜色节点
+  base_ptr parent;  //RB 树的许多操作，必须知道父节点
+  base_ptr left;  //指向左节点
+  base_ptr right; //指向右节点
 
+  // 二叉搜索树的 找到最大值
   static base_ptr minimum(base_ptr x)
   {
     while (x->left != 0) x = x->left;
     return x;
   }
-
+  //找到最大值
   static base_ptr maximum(base_ptr x)
   {
     while (x->right != 0) x = x->right;
     return x;
   }
 };
-
+//红黑树节点
 template <class Value>
 struct __rb_tree_node : public __rb_tree_node_base
 {
   typedef __rb_tree_node<Value>* link_type;
-  Value value_field;
+  Value value_field; //值域
 };
 
-
+//基层迭代器
 struct __rb_tree_base_iterator
 {
   typedef __rb_tree_node_base::base_ptr base_ptr;
-  typedef bidirectional_iterator_tag iterator_category;
+  typedef bidirectional_iterator_tag iterator_category;//双向迭代器
   typedef ptrdiff_t difference_type;
   base_ptr node;
-
+  //用来实现 operator ++
   void increment()
   {
     if (node->right != 0) {
@@ -119,7 +120,7 @@ struct __rb_tree_base_iterator
         node = y;
     }
   }
-
+  //用来实现 operator --
   void decrement()
   {
     if (node->color == __rb_tree_red &&
@@ -141,7 +142,7 @@ struct __rb_tree_base_iterator
     }
   }
 };
-
+//real 迭代器
 template <class Value, class Ref, class Ptr>
 struct __rb_tree_iterator : public __rb_tree_base_iterator
 {
@@ -415,9 +416,10 @@ __rb_tree_rebalance_for_erase(__rb_tree_node_base* z,
   return y;
 }
 /*
-  红黑树
-  Value : key + data
-  KeyOfVal : 怎么根据key取出对应的value
+*   红黑树
+*   Value : key + data
+*   KeyOfVal : 怎么根据key取出对应的value
+*   注意理解， header 的实现技巧 
 */
 template <class Key, class Value, class KeyOfValue, class Compare,
           class Alloc = alloc>
@@ -426,7 +428,7 @@ protected:
   typedef void* void_pointer;
   typedef __rb_tree_node_base* base_ptr;
   typedef __rb_tree_node<Value> rb_tree_node;
-  typedef simple_alloc<rb_tree_node, Alloc> rb_tree_node_allocator;
+  typedef simple_alloc<rb_tree_node, Alloc> rb_tree_node_allocator;//空间专属的配置器
   typedef __rb_tree_color_type color_type;
 public:
   typedef Key key_type;
@@ -465,14 +467,15 @@ protected:
   }
 
 protected:
-  size_type node_count; // keeps track of size of tree
+  size_type node_count; // 节点的数量
   link_type header;  //假根节点
-  Compare key_compare;
+  Compare key_compare; //节点间的键值比较规则，function object 对象
 
+  //用来 取得 header 的成员
   link_type& root() const { return (link_type&) header->parent; }
   link_type& leftmost() const { return (link_type&) header->left; }
   link_type& rightmost() const { return (link_type&) header->right; }
-
+  //取得节点 x 的成员
   static link_type& left(link_type x) { return (link_type&)(x->left); }
   static link_type& right(link_type x) { return (link_type&)(x->right); }
   static link_type& parent(link_type x) { return (link_type&)(x->parent); }
@@ -519,8 +522,8 @@ private:
     color(header) = __rb_tree_red; // used to distinguish header from 
                                    // root, in iterator.operator++
     root() = 0;
-    leftmost() = header;
-    rightmost() = header;
+    leftmost() = header;   //header 的左节点为自己
+    rightmost() = header;  //header 的右节点为自己
   }
 public:
                                 // allocation/deallocation
@@ -580,6 +583,9 @@ public:
   }
     
 public:
+  /*
+  *  提供两种插入操作
+  */
                                 // insert/erase
   pair<iterator,bool> insert_unique(const value_type& x);
   iterator insert_equal(const value_type& x);
