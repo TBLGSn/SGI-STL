@@ -37,8 +37,8 @@ __STL_BEGIN_NAMESPACE
 #pragma set woff 1174
 #endif
 /*
-  multiset 借助红黑树实现
-  
+*  multiset 也借助红黑树实现，唯一的差别在于允许键值重复
+*   因此使用的是 RB-tree 的 insert_equal,而非insert_unique() 
 */
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class Compare = less<Key>, class Alloc = alloc>
