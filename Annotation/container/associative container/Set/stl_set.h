@@ -41,6 +41,7 @@ __STL_BEGIN_NAMESPACE
   set 和 multiset以rb-tree为底层结构,因此有自动排序的特性
   set 和 multiset 的 key 就是value
   虽然 br-tree能够通过iterator改变元素的值，然而set和multiset并不支持
+  什么时候用 内置 空间配置器.
 */
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class Compare = less<Key>, class Alloc = alloc>
@@ -58,12 +59,13 @@ public:
   typedef Compare value_compare;
 private:
   /*
-    红黑树 为 底层结构,其中key_type和value指定为同一个
+
+    红黑树 为 底层结构,大部分操作通过适配 红黑树实现,其中key_type和value指定为同一个
     keyOfvalue 指定为 identity<value_type>
   */
   typedef rb_tree<key_type, value_type, 
                   identity<value_type>, key_compare, Alloc> rep_type;
-  rep_type t;  // red-black tree representing set
+  rep_type t;  //以红黑树为底层架构
 
 public:
   typedef typename rep_type::const_pointer pointer;
@@ -81,6 +83,7 @@ public:
   // allocation/deallocation
 
   set() : t(Compare()) {}
+  //为什么是 eplict ?
   explicit set(const Compare& comp) : t(comp) {}
 
 #ifdef __STL_MEMBER_TEMPLATES
@@ -92,6 +95,7 @@ public:
   set(InputIterator first, InputIterator last, const Compare& comp)
     : t(comp) { t.insert_unique(first, last); }
 #else
+  //使用 insert_unique() 而非 insert_equal()
   set(const value_type* first, const value_type* last) 
     : t(Compare()) { t.insert_unique(first, last); }
   set(const value_type* first, const value_type* last, const Compare& comp)
@@ -102,8 +106,9 @@ public:
   set(const_iterator first, const_iterator last, const Compare& comp)
     : t(comp) { t.insert_unique(first, last); }
 #endif /* __STL_MEMBER_TEMPLATES */
-
+  //copy 构造符
   set(const set<Key, Compare, Alloc>& x) : t(x.t) {}
+  //copy assignment 操作符，未处理自我赋值的情况，但 返回了 * this
   set<Key, Compare, Alloc>& operator=(const set<Key, Compare, Alloc>& x) { 
     t = x.t; 
     return *this;

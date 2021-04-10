@@ -16,6 +16,12 @@
  *   You should not attempt to use it directly.
  */
 
+/*
+*  并不属于 STL 范畴
+*  与list 一样， 操作并不会导致原有的迭代器失效
+*  基于效率考虑， slist 不提供 push_back(),只提供 push_front()
+* 
+*/
 #ifndef __SGI_STL_INTERNAL_SLIST_H
 #define __SGI_STL_INTERNAL_SLIST_H
 
@@ -25,12 +31,17 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-
+/*
+* 单向链表的节点基本结构
+*/
 struct __slist_node_base
 {
   __slist_node_base* next;
 };
 
+/*
+* 一只某一节点，插入新节点于其后
+*/
 inline __slist_node_base* __slist_make_link(__slist_node_base* prev_node,
                                             __slist_node_base* new_node)
 {
@@ -81,22 +92,29 @@ inline __slist_node_base* __slist_reverse(__slist_node_base* node)
   }
   return result;
 }
-
+/*
+* 单向链表的节点结构
+* 继承的 slist_node_base
+*/
 template <class T>
 struct __slist_node : public __slist_node_base
 {
   T data;
 };
 
+/*
+*   单向链表的迭代器基本结构
+*/
 struct __slist_iterator_base
 {
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
-  typedef forward_iterator_tag iterator_category;
+  typedef forward_iterator_tag iterator_category; //单向类型
 
-  __slist_node_base* node;
+  __slist_node_base* node; //指向节点基本结构
 
   __slist_iterator_base(__slist_node_base* x) : node(x) {}
+  //前进一个节点
   void incr() { node = node->next; }
 
   bool operator==(const __slist_iterator_base& x) const {
@@ -106,7 +124,10 @@ struct __slist_iterator_base
     return node != x.node;
   }
 };
-
+/*
+*   单向链表额迭代器结构,没有 实现 “--”
+*   未定义 operator == ，所以 调用的是 _slist_iterator_base::operator == 
+*/
 template <class T, class Ref, class Ptr>
 struct __slist_iterator : public __slist_iterator_base
 {
@@ -162,7 +183,7 @@ value_type(const __slist_iterator<T, Ref, Ptr>&) {
 }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
+// 单向链表的大小
 inline size_t __slist_size(__slist_node_base* node)
 {
   size_t result = 0;
@@ -170,7 +191,9 @@ inline size_t __slist_size(__slist_node_base* node)
     ++result;
   return result;
 }
-
+/*
+* 
+*/
 template <class T, class Alloc = alloc>
 class slist
 {
@@ -242,7 +265,7 @@ private:
 #endif /* __STL_MEMBER_TEMPLATES */
 
 private:
-  list_node_base head;
+  list_node_base head; //头部，不是指针
 
 public:
   slist() { head.next = 0; }
@@ -277,8 +300,14 @@ public:
 
   iterator begin() { return iterator((list_node*)head.next); } //头结点的下一个节点
   const_iterator begin() const { return const_iterator((list_node*)head.next);}
+  /*
+    单链表，无法返回最后的元素,生成一个暂时对象，引发 ctor
+    调用_slist_iterator_base(0) 
+    ↓
+    _slist_iterator(_slist_node_base* x) 从而导致 node(0)
+  */
 
-  iterator end() { return iterator(0); } //单链表，无法返回最后的元素
+  iterator end() { return iterator(0); }
   const_iterator end() const { return const_iterator(0); }
 
   size_type size() const { return __slist_size(head.next); }

@@ -33,7 +33,8 @@
 
 __STL_BEGIN_NAMESPACE
 /*
-  通过deque<T>实现
+  与 stack 实现类似.
+  通过deque<T>实现，同样没有提供遍历操作
 */
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class T, class Sequence = deque<T> >
@@ -77,15 +78,21 @@ template <class T, class Sequence = vector<T>,
 #else
 template <class T, class Sequence, class Compare>
 #endif
+/*
+*   优先队列,默认是 用vector 实现的满二叉树，和 "算法实现"的
+*   更应该算作一种 “Adapter”而不是“container”
+*   没有迭代器
+*/
 class  priority_queue {
+  //只提供这几种 type
 public:
   typedef typename Sequence::value_type value_type;
   typedef typename Sequence::size_type size_type;
   typedef typename Sequence::reference reference;
   typedef typename Sequence::const_reference const_reference;
 protected:
-  Sequence c;
-  Compare comp;
+  Sequence c; //底层容器
+  Compare comp;//元素大小比较标准
 public:
   priority_queue() : c() {}
   explicit priority_queue(const Compare& x) :  c(), comp(x) {}
@@ -111,7 +118,7 @@ public:
   const_reference top() const { return c.front(); }
   void push(const value_type& x) {
     __STL_TRY {
-      c.push_back(x); 
+      c.push_back(x);  //先推入末端，再重排 heap
       push_heap(c.begin(), c.end(), comp);
     }
     __STL_UNWIND(c.clear());

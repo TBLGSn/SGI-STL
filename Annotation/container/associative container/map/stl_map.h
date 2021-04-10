@@ -53,7 +53,7 @@ public:
   typedef Key key_type;
   typedef T data_type;
   typedef T mapped_type;
-  typedef pair<const Key, T> value_type;
+  typedef pair<const Key, T> value_type; //元素类型(键值/实值)，Key 类型为 const
   typedef Compare key_compare;
     
   class value_compare
@@ -69,9 +69,10 @@ public:
   };
 
 private:
+  // Compare 为 select1st，而不是 identity
   typedef rb_tree<key_type, value_type, 
                   select1st<value_type>, key_compare, Alloc> rep_type;
-  rep_type t;  // red-black tree representing map
+  rep_type t;  // 内置红黑树
 public:
   typedef typename rep_type::pointer pointer;
   typedef typename rep_type::const_pointer const_pointer;
@@ -84,7 +85,7 @@ public:
   typedef typename rep_type::size_type size_type;
   typedef typename rep_type::difference_type difference_type;
 
-  // allocation/deallocation
+  // allocation/deallocation， 与 set 类似
 
   map() : t(Compare()) {}
   explicit map(const Compare& comp) : t(comp) {}
@@ -116,7 +117,7 @@ public:
     return *this; 
   }
 
-  // accessors:
+  // accessors，调用的 rb-tree 中的函数
 
   key_compare key_comp() const { return t.key_comp(); }
   value_compare value_comp() const { return value_compare(t.key_comp()); }
@@ -132,13 +133,22 @@ public:
   size_type size() const { return t.size(); }
   size_type max_size() const { return t.max_size(); }
   //重写operator[] 返回一个reference指向带有key的元素,key如果已经存在这么办？
+  // 这使得 map[] 既可以做左值，也可以做右值
   T& operator[](const key_type& k) {
+    /*
+      临时的 value_type，因为实值未知
+      插入到 map,中去，返回 pair. 
+      当 map[] 用作右值时， 返回在map找到的位置，返回pair的first指向存在的元素，再通过 second 取得 实值
+      当 map[] 用作左值时， 返回可以插入的位置，pair的first值指向不存在的元素，再通过 second 将实值赋给它(返回的是 引用类型)
+
+    */
     return (*((insert(value_type(k, T()))).first)).second;
   }
+  //提供 一个 swap 函数，符合 effective C++
   void swap(map<Key, T, Compare, Alloc>& x) { t.swap(x.t); }
 
   // insert/erase
-
+  //返回一个 pair， bool 表示 是否插入成功
   pair<iterator,bool> insert(const value_type& x) { return t.insert_unique(x); }
   iterator insert(iterator position, const value_type& x) {
     return t.insert_unique(position, x);

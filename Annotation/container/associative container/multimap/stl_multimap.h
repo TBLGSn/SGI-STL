@@ -36,7 +36,9 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-
+/*
+*  唯一与 map 的区别在于允许键值重复， 调用的是RB-tree 的insert_equal() 而非insert_unique()
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class T, class Compare = less<Key>, class Alloc = alloc>
 #else

@@ -27,6 +27,13 @@
  *   You should not attempt to use it directly.
  */
 
+/*
+*   heap 并不属于 STL 容器组件，(更像是算法)充当 priority_queue 的助手
+*   vector 和 算法 结合实现的 heap
+*   完全二叉树，priority_queue 实际使用的 vector<T>充当的容器.
+*   不提供迭代器
+*/
+
 #ifndef __SGI_STL_INTERNAL_HEAP_H
 #define __SGI_STL_INTERNAL_HEAP_H
 
@@ -35,11 +42,12 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1209
 #endif
-
+// 增加 元素
 template <class RandomAccessIterator, class Distance, class T>
 void __push_heap(RandomAccessIterator first, Distance holeIndex,
                  Distance topIndex, T value) {
   Distance parent = (holeIndex - 1) / 2;
+  //默认是 max_heap
   while (holeIndex > topIndex && *(first + parent) < value) {
     *(first + holeIndex) = *(first + parent);
     holeIndex = parent;
@@ -57,6 +65,7 @@ inline void __push_heap_aux(RandomAccessIterator first,
 
 template <class RandomAccessIterator>
 inline void push_heap(RandomAccessIterator first, RandomAccessIterator last) {
+  //此函数调用时， 新元素已置于底部容器的最尾端
   __push_heap_aux(first, last, distance_type(first), value_type(first));
 }
 
@@ -64,6 +73,7 @@ template <class RandomAccessIterator, class Distance, class T, class Compare>
 void __push_heap(RandomAccessIterator first, Distance holeIndex,
                  Distance topIndex, T value, Compare comp) {
   Distance parent = (holeIndex - 1) / 2;
+  //调用 comp 进行比较
   while (holeIndex > topIndex && comp(*(first + parent), value)) {
     *(first + holeIndex) = *(first + parent);
     holeIndex = parent;
@@ -79,7 +89,7 @@ inline void __push_heap_aux(RandomAccessIterator first,
   __push_heap(first, Distance((last - first) - 1), Distance(0), 
               T(*(last - 1)), comp);
 }
-
+//能够指定 Compare 的 push_heap 版本
 template <class RandomAccessIterator, class Compare>
 inline void push_heap(RandomAccessIterator first, RandomAccessIterator last,
                       Compare comp) {
@@ -104,7 +114,7 @@ void __adjust_heap(RandomAccessIterator first, Distance holeIndex,
   }
   __push_heap(first, holeIndex, topIndex, value);
 }
-
+//  弹出 heap 顶的元素
 template <class RandomAccessIterator, class T, class Distance>
 inline void __pop_heap(RandomAccessIterator first, RandomAccessIterator last,
                        RandomAccessIterator result, T value, Distance*) {
@@ -115,6 +125,7 @@ inline void __pop_heap(RandomAccessIterator first, RandomAccessIterator last,
 template <class RandomAccessIterator, class T>
 inline void __pop_heap_aux(RandomAccessIterator first,
                            RandomAccessIterator last, T*) {
+  //将 heap顶的元素 放到最后，并自上而下调整。“堆的长度-1”
   __pop_heap(first, last - 1, last - 1, T(*(last - 1)), distance_type(first));
 }
 
@@ -162,7 +173,9 @@ inline void pop_heap(RandomAccessIterator first, RandomAccessIterator last,
                      Compare comp) {
     __pop_heap_aux(first, last, value_type(first), comp);
 }
-
+/*
+*   将现有的数据 转变为一个 heap
+*/
 template <class RandomAccessIterator, class T, class Distance>
 void __make_heap(RandomAccessIterator first, RandomAccessIterator last, T*,
                  Distance*) {
@@ -204,6 +217,7 @@ inline void make_heap(RandomAccessIterator first, RandomAccessIterator last,
 
 template <class RandomAccessIterator>
 void sort_heap(RandomAccessIterator first, RandomAccessIterator last) {
+  //不断将 堆顶的元素弹出(实际是放到vector的尾部)
   while (last - first > 1) pop_heap(first, last--);
 }
 
