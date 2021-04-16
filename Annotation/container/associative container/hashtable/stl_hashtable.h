@@ -46,7 +46,7 @@
 
 __STL_BEGIN_NAMESPACE
 
-//hashtable节点，通过链表的方式处理冲突
+//hashtable节点(桶 bucket),通过链表的方式处理冲突
 template <class Value>
 struct __hashtable_node
 {
@@ -81,14 +81,14 @@ struct __hashtable_iterator {
           const_iterator;
   typedef __hashtable_node<Value> node;
 
-  typedef forward_iterator_tag iterator_category;
+  typedef forward_iterator_tag iterator_category;//向前迭代器
   typedef Value value_type;
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
   typedef Value& reference;
   typedef Value* pointer;
 
-  node* cur;
+  node* cur;//迭代器目前所指的节点
   hashtable* ht; //当操作冲突链表之后，能够返回hashtable
 
   __hashtable_iterator(node* n, hashtable* tab) : cur(n), ht(tab) {}
@@ -97,6 +97,7 @@ struct __hashtable_iterator {
 #ifndef __SGI_STL_NO_ARROW_OPERATOR
   pointer operator->() const { return &(operator*()); }
 #endif /* __SGI_STL_NO_ARROW_OPERATOR */
+  //没有operator-- ,因为是单向迭代器
   iterator& operator++();
   iterator operator++(int);
   bool operator==(const iterator& it) const { return cur == it.cur; }
@@ -142,6 +143,7 @@ struct __hashtable_const_iterator {
 };
 
 // Note: assumes long is at least 32 bits.
+//表格 的大小，预先定义的 28 个质数
 static const int __stl_num_primes = 28;
 static const unsigned long __stl_prime_list[__stl_num_primes] =
 {
@@ -152,7 +154,7 @@ static const unsigned long __stl_prime_list[__stl_num_primes] =
   50331653,   100663319,    201326611,   402653189, 805306457, 
   1610612741, 3221225473ul, 4294967291ul
 };
-
+//根据 n 找出，大于并最接近 n 的质数
 inline unsigned long __stl_next_prime(unsigned long n)
 {
   const unsigned long* first = __stl_prime_list;
@@ -168,7 +170,7 @@ inline unsigned long __stl_next_prime(unsigned long n)
 
 template <class Value, class Key, class HashFcn,
           class ExtractKey, class EqualKey,
-          class Alloc>
+          class Alloc> //之前声明时，已经给予了默认值 alloc
 class hashtable {
 public:
   typedef Key key_type;
@@ -187,15 +189,16 @@ public:
   key_equal key_eq() const { return equals; }
 
 private:
+  // 以下的三者都是 function Object,<stl_hash_fun.h>中定义有数个
   hasher hash; //模板中的HashFcn
   key_equal equals; //模板参数中的EqualKey
   ExtractKey get_key;// 模板中的ExtractKey
 
   typedef __hashtable_node<Value> node;
-  typedef simple_alloc<node, Alloc> node_allocator;
+  typedef simple_alloc<node, Alloc> node_allocator;//专属的节点配置器
 
-  vector<node*,Alloc> buckets;//
-  size_type num_elements; //现在有多少元素
+  vector<node*,Alloc> buckets;  //以 vector 完成
+  size_type num_elements;       //现在有多少元素
 
 public:
   typedef __hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, 
@@ -212,6 +215,7 @@ public:
   __hashtable_const_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>;
 
 public:
+  //构造函数，无默认构造函数
   hashtable(size_type n,
             const HashFcn&    hf,
             const EqualKey&   eql,
@@ -288,7 +292,7 @@ public:
 public:
 
   size_type bucket_count() const { return buckets.size(); }
-
+  //返回最大可以 有多少 bucket
   size_type max_bucket_count() const
     { return __stl_prime_list[__stl_num_primes - 1]; } 
 
@@ -299,10 +303,10 @@ public:
       result += 1;
     return result;
   }
-
+  // 插入元素
   pair<iterator, bool> insert_unique(const value_type& obj)
   {
-    resize(num_elements + 1);
+    resize(num_elements + 1); //扩充表格
     return insert_unique_noresize(obj);
   }
 
@@ -456,11 +460,13 @@ private:
   void initialize_buckets(size_type n)
   {
     const size_type n_buckets = next_size(n);
+    //vector 的reserve 提前保留适当的容量，以免避免重新分配内存
     buckets.reserve(n_buckets);
-    buckets.insert(buckets.end(), n_buckets, (node*) 0);
+    // insert(pos, n, element) 在位置pos之前插入 n 个element元素
+    buckets.insert(buckets.end(), n_buckets, (node*) 0);//全部初始化为 0 
     num_elements = 0;
   }
-
+  //默认n == buckets.size 即 hash 值 % n
   size_type bkt_num_key(const key_type& key) const
   {
     return bkt_num_key(key, buckets.size());
@@ -510,12 +516,13 @@ __hashtable_iterator<V, K, HF, ExK, EqK, A>&
 __hashtable_iterator<V, K, HF, ExK, EqK, A>::operator++()
 {
   const node* old = cur;
-  cur = cur->next;
-  if (!cur) {
+  cur = cur->next; //当前 bucket链表到了最后, 如果找到，那就是它
+  if (!cur) { 
+    // 根据元素值，定位出下一个 bucket，其起头处就是我们的目的地
     size_type bucket = ht->bkt_num(old->val);
-    while (!cur && ++bucket < ht->buckets.size())
+    while (!cur && ++bucket < ht->buckets.size()) //operator ++
       cur = ht->buckets[bucket];
-  }
+    }
   return *this;
 }
 
@@ -625,7 +632,7 @@ inline void swap(hashtable<Val, Key, HF, Extract, EqKey, A>& ht1,
 
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
 
-
+//不需要重建表格的情况下插入新节点，键值不允许重复
 template <class V, class K, class HF, class Ex, class Eq, class A>
 pair<typename hashtable<V, K, HF, Ex, Eq, A>::iterator, bool> 
 hashtable<V, K, HF, Ex, Eq, A>::insert_unique_noresize(const value_type& obj)
@@ -835,18 +842,21 @@ hashtable<V, K, HF, Ex, Eq, A>::erase(const const_iterator& it)
   erase(iterator(const_cast<node*>(it.cur),
                  const_cast<hashtable*>(it.ht)));
 }
-
+//重建表格
 template <class V, class K, class HF, class Ex, class Eq, class A>
 void hashtable<V, K, HF, Ex, Eq, A>::resize(size_type num_elements_hint)
 {
   const size_type old_n = buckets.size();
-  if (num_elements_hint > old_n) {
-    const size_type n = next_size(num_elements_hint);
+  if (num_elements_hint > old_n) { 
+    //插入新元素之后的大小和bucket vector 的大小进行比较
+    const size_type n = next_size(num_elements_hint); //下一个质数
+
     if (n > old_n) {
-      vector<node*, A> tmp(n, (node*) 0);
+      vector<node*, A> tmp(n, (node*) 0);//新的bucket
       __STL_TRY {
         for (size_type bucket = 0; bucket < old_n; ++bucket) {
           node* first = buckets[bucket];
+          //处理每个 bucket 对应的链表
           while (first) {
             size_type new_bucket = bkt_num(first->val, n);
             buckets[bucket] = first->next;
@@ -909,9 +919,11 @@ hashtable<V, K, HF, Ex, Eq, A>::erase_bucket(const size_type n, node* last)
 
 template <class V, class K, class HF, class Ex, class Eq, class A>
 void hashtable<V, K, HF, Ex, Eq, A>::clear()
-{
+{ 
+  //每一个bucket
   for (size_type i = 0; i < buckets.size(); ++i) {
     node* cur = buckets[i];
+    //将 bucket 链表中每一个节点释放
     while (cur != 0) {
       node* next = cur->next;
       delete_node(cur);
@@ -920,9 +932,10 @@ void hashtable<V, K, HF, Ex, Eq, A>::clear()
     buckets[i] = 0;
   }
   num_elements = 0;
+  //buckets vector 并未释放空间
 }
 
-    
+//复制
 template <class V, class K, class HF, class Ex, class Eq, class A>
 void hashtable<V, K, HF, Ex, Eq, A>::copy_from(const hashtable& ht)
 {
