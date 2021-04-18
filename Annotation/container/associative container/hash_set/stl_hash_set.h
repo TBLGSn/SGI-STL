@@ -191,7 +191,11 @@ inline void swap(hash_set<Val, HashFcn, EqualKey, Alloc>& hs1,
 }
 
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
-
+/*
+*  与multiset 完全相同，唯一的差别在于它的底层是 hash_table
+*  与hash_set 的差别是，前者使用的是 insert_equal() 而后者使用的是 insert_unique()
+*
+*/
 
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Value, class HashFcn = hash<Value>,

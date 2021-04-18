@@ -193,7 +193,11 @@ inline void swap(hash_map<Key, T, HashFcn, EqualKey, Alloc>& hm1,
 }
 
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
-
+/*
+* hash_multimap 的特性与multimap完全相同，唯一的区别是底层是hash_stable
+* hash_multimap 与hash_map 实现上的区别在于，前者插入采用的是 insert_equal(), 后者使用的是insert_unqie()
+*
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Key, class T, class HashFcn = hash<Key>,
           class EqualKey = equal_to<Key>,
