@@ -36,7 +36,11 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-
+/*
+* hash_set 以 hashtable 为底层架构，所以并没有自动排序的性质
+* EqualKey 指定为 equal_to
+* 
+*/
 #ifndef __STL_LIMITED_DEFAULT_TEMPLATES
 template <class Value, class HashFcn = hash<Value>,
           class EqualKey = equal_to<Value>,
@@ -49,7 +53,8 @@ class hash_set
 private:
   typedef hashtable<Value, Value, HashFcn, identity<Value>, 
                     EqualKey, Alloc> ht;
-  ht rep;
+  
+  ht rep; //hash_table 底层架构,ExtractKey 使用的是 identity<>
 
 public:
   typedef typename ht::key_type key_type;
@@ -71,12 +76,13 @@ public:
   key_equal key_eq() const { return rep.key_eq(); }
 
 public:
+  //默认 以 100 作为表格的大小,会被hash_table 调整为 最接近且大于的质数
   hash_set() : rep(100, hasher(), key_equal()) {}
   explicit hash_set(size_type n) : rep(n, hasher(), key_equal()) {}
   hash_set(size_type n, const hasher& hf) : rep(n, hf, key_equal()) {}
   hash_set(size_type n, const hasher& hf, const key_equal& eql)
     : rep(n, hf, eql) {}
-
+  //使用 insert_unique 
 #ifdef __STL_MEMBER_TEMPLATES
   template <class InputIterator>
   hash_set(InputIterator f, InputIterator l)
