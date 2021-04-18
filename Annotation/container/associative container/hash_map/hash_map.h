@@ -23,7 +23,10 @@
  * purpose.  It is provided "as is" without express or implied warranty.
  *
  */
-
+/*
+*   与hash_set 基本相同，底层以 hash_table 完成
+*   使用的是 insert_unique，不允许键值重复？
+*/
 #ifndef __SGI_STL_HASH_MAP_H
 #define __SGI_STL_HASH_MAP_H
 
