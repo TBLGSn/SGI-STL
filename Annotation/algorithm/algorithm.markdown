@@ -5,13 +5,15 @@
 在抽象的迭代器层面工作，这使得算法能够不受 数据结构 的约束.
 
 每一个算法的声明，将表现出它的所需要的最低程度的迭代器类型.例如find() 需要一个inputiterator，这是它的最低要求,但它在更高类型的迭代器上也能允许.(是STL的迭代器从属结构，而不是继承结构)
-![iterator_hypotaxis](image/iterator_ hypotaxis.png)
+
+![iterator_hypotaxis](/image/iterator_hypotaxis.png)
 
 许多 STL 算法不只支持一个版本. 
 - 这一类算法某个版本采用缺省运算行为，另一个个版本提供额外参数，接受外界传入的一个 functor.(有时不同版本的名称不会发生改变，但有时会在原函数名称后面加上"—if"表示定制版本)
 - 有的算法除了提供“就地进行版”还会提供有“_copy”后缀“非就地进行版”,表明在此算法中会进行复制操作，然后在副本进行修改并返回副本.
 
 所有的数值算法都包含于 stl_numeric.h文件中(通过包含<numeric> 文件就可以使用)，其余算法包含于stl_algo和stl_algobase 中(包含algorithm.h 文件即进行使用).
+
 ## 分类
 STL 的算法分为以下的几类：
 - 非更易型算法
@@ -21,3 +23,7 @@ STL 的算法分为以下的几类：
 - 排序算法
 - 已序区间算法
 - 数值算法
+
+## copy 算法
+最值得一提的就是 STL 对应用 copy 性能的优化.
+![copy算法](/image/algorithm_copy.png)
