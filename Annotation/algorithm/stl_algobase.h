@@ -210,7 +210,10 @@ inline wchar_t* copy(const wchar_t* first, const wchar_t* last,
   memmove(result, first, sizeof(wchar_t) * (last - first));
   return result + (last - first);
 }
-
+/* 
+*  将[first, last) 逆向复制到 result -1 为起点逆向进行复制的区间上
+*  算法实现的技巧上与 copy 类似
+*/
 template <class BidirectionalIterator1, class BidirectionalIterator2>
 inline BidirectionalIterator2 __copy_backward(BidirectionalIterator1 first, 
                                               BidirectionalIterator1 last, 
