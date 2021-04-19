@@ -2,6 +2,7 @@
 
 ## STL 算法的一般形式
 所有的STL算法都用作由迭代器[frist， last)(前闭后开)标示出来的区间上.
+在抽象的迭代器层面工作，这使得算法能够不受 数据结构 的约束.
 
 每一个算法的声明，将表现出它的所需要的最低程度的迭代器类型.例如find() 需要一个inputiterator，这是它的最低要求,但它在更高类型的迭代器上也能允许.(是STL的迭代器从属结构，而不是继承结构)
 ![iterator_hypotaxis](image/iterator_ hypotaxis.png)

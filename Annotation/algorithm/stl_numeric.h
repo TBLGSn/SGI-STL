@@ -28,12 +28,13 @@
  *   You should not attempt to use it directly.
  */
 
+/*
+   数值算法
+*/
 
 #ifndef __SGI_STL_INTERNAL_NUMERIC_H
 #define __SGI_STL_INTERNAL_NUMERIC_H
-/*
-  数值算法
-*/
+
 __STL_BEGIN_NAMESPACE
 //将元素"累计"到初值 init 上
 template <class InputIterator, class T>
@@ -50,7 +51,9 @@ T accumulate(InputIterator first, InputIterator last, T init,
     init = binary_op(init, *first);
   return init;
 }
-
+/* 
+* 计算 [first1, last1) 和 [first2, first2 + (last1-first1)) 的一般内积
+*/
 template <class InputIterator1, class InputIterator2, class T>
 T inner_product(InputIterator1 first1, InputIterator1 last1,
                 InputIterator2 first2, T init) {
@@ -68,13 +71,15 @@ T inner_product(InputIterator1 first1, InputIterator1 last1,
     init = binary_op1(init, binary_op2(*first1, *first2));
   return init;
 }
-
+/*
+*   计算局部总和
+*/
 template <class InputIterator, class OutputIterator, class T>
 OutputIterator __partial_sum(InputIterator first, InputIterator last,
                              OutputIterator result, T*) {
   T value = *first;
   while (++first != last) {
-    value = value + *first;
+    value = value + *first; //计算 n 个元素的总和
     *++result = value;
   }
   return ++result;
@@ -108,14 +113,18 @@ OutputIterator partial_sum(InputIterator first, InputIterator last,
   *result = *first;
   return __partial_sum(first, last, result, value_type(first), binary_op);
 }
-
+/*
+*  用来 计算[first, last) 中响铃元素的差额(并不是总和)
+*  当 result == first 时,该算法在原区间上直接操作，是更易型算法
+*/
+//版本一
 template <class InputIterator, class OutputIterator, class T>
 OutputIterator __adjacent_difference(InputIterator first, InputIterator last, 
                                      OutputIterator result, T*) {
   T value = *first;
-  while (++first != last) {
+  while (++first != last) {  //遍历整个区间
     T tmp = *first;
-    *++result = tmp - value;
+    *++result = tmp - value;//当前元素与之前元素的差值,赋给 目的端
     value = tmp;
   }
   return ++result;
@@ -128,7 +137,7 @@ OutputIterator adjacent_difference(InputIterator first, InputIterator last,
   *result = *first;
   return __adjacent_difference(first, last, result, value_type(first));
 }
-
+// 版本二: 可以指定 BinaryOperation 版本
 template <class InputIterator, class OutputIterator, class T, 
           class BinaryOperation>
 OutputIterator __adjacent_difference(InputIterator first, InputIterator last, 
@@ -153,9 +162,12 @@ OutputIterator adjacent_difference(InputIterator first, InputIterator last,
                                binary_op);
 }
 
-// Returns x ** n, where n >= 0.  Note that "multiplication"
-//  is required to be associative, but not necessarily commutative.
-    
+/*
+*  并不属于 STL 标准
+*/
+/*
+  版本一中 MonoidOperation 需要满足结合律，但不需要满足交换律 
+*/
 template <class T, class Integer, class MonoidOperation>
 T power(T x, Integer n, MonoidOperation op) {
   if (n == 0)
@@ -177,12 +189,14 @@ T power(T x, Integer n, MonoidOperation op) {
     return result;
   }
 }
-
+//版本二 指定运算型为 乘法
 template <class T, class Integer>
 inline T power(T x, Integer n) {
   return power(x, n, multiplies<T>());
 }
-
+/*
+  不属于 STL 标准,更易型算法,从指定的 value开始,呈现递增状态
+*/
 
 template <class ForwardIterator, class T>
 void iota(ForwardIterator first, ForwardIterator last, T value) {
