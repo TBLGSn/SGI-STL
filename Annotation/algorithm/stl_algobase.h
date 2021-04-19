@@ -27,7 +27,10 @@
 /* NOTE: This is an internal header file, included by other STL headers.
  *   You should not attempt to use it directly.
  */
-
+/*
+STL 标准中，并没有区分 基本算法或复杂算法，然而 SGI 将一些常见的算法定义于 <stl_algobase.h>
+之中,其它算法定义于 <stl_base.h> 中
+*/
 
 #ifndef __SGI_STL_INTERNAL_ALGOBASE_H
 #define __SGI_STL_INTERNAL_ALGOBASE_H
@@ -57,19 +60,26 @@
 #endif
 
 __STL_BEGIN_NAMESPACE
-
+/* 将 两个 ForwardIterator 所指对象对调，第三参数并没有定义参数命,更重要的是
+  利用了 C++ 的参数推导
+*/
 template <class ForwardIterator1, class ForwardIterator2, class T>
 inline void __iter_swap(ForwardIterator1 a, ForwardIterator2 b, T*) {
   T tmp = *a;
   *a = *b;
   *b = tmp;
 }
-
+/*
+* 不借助 _iter_swap 辅助函数的话,iter_swap 就应该这样写
+* typename iterator_traits<ForwardIterator1>::value_type tmp = *a;
+* *a = *b;
+* *b = tmp;
+*/
 template <class ForwardIterator1, class ForwardIterator2>
 inline void iter_swap(ForwardIterator1 a, ForwardIterator2 b) {
-  __iter_swap(a, b, value_type(a));
+  __iter_swap(a, b, value_type(a)); //第三参数的接受端是 T*
 }
-
+//交换两个对象,是通过 copy 的方式实现的,在某些情况下很慢
 template <class T>
 inline void swap(T& a, T& b) {
   T tmp = a;
@@ -81,12 +91,12 @@ inline void swap(T& a, T& b) {
 
 #undef min
 #undef max
-
+//返回较小值
 template <class T>
 inline const T& min(const T& a, const T& b) {
   return b < a ? b : a;
 }
-
+//返回较大值
 template <class T>
 inline const T& max(const T& a, const T& b) {
   return  a < b ? b : a;
@@ -280,20 +290,25 @@ copy_n(InputIterator first, Size count,
        OutputIterator result) {
   return __copy_n(first, count, result, iterator_category(first));
 }
-
+/*
+  将[first, last)内所有元素改为新值
+*/
 template <class ForwardIterator, class T>
 void fill(ForwardIterator first, ForwardIterator last, const T& value) {
   for ( ; first != last; ++first)
     *first = value;
 }
-
+//前 n 个元素被设置为新值
 template <class OutputIterator, class Size, class T>
 OutputIterator fill_n(OutputIterator first, Size n, const T& value) {
   for ( ; n > 0; --n, ++first)
     *first = value;
   return first;
 }
-
+/*
+* 用来平行比较两个序列，指出两者之间的第一个不匹配点，
+* 返回 不匹配时，两个序列中位置
+*/
 template <class InputIterator1, class InputIterator2>
 pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
 					      InputIterator1 last1,
@@ -316,7 +331,11 @@ pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
   }
   return pair<InputIterator1, InputIterator2>(first1, first2);
 }
-
+/*
+*  如果两个序列在 [first, last)区间相等，则返回true
+*  但 第二个序列长出来的部分不在考虑范围内
+*/
+//版本一
 template <class InputIterator1, class InputIterator2>
 inline bool equal(InputIterator1 first1, InputIterator1 last1,
 		  InputIterator2 first2) {
@@ -325,7 +344,7 @@ inline bool equal(InputIterator1 first1, InputIterator1 last1,
       return false;
   return true;
 }
-
+//版本二，可以指定 比较依据
 template <class InputIterator1, class InputIterator2, class BinaryPredicate>
 inline bool equal(InputIterator1 first1, InputIterator1 last1,
 		  InputIterator2 first2, BinaryPredicate binary_pred) {
@@ -334,7 +353,9 @@ inline bool equal(InputIterator1 first1, InputIterator1 last1,
       return false;
   return true;
 }
-
+/*
+*  以字典排序的方式，对两个序列[first1, last1) 和 [first2, last2) 进行比较
+*/
 template <class InputIterator1, class InputIterator2>
 bool lexicographical_compare(InputIterator1 first1, InputIterator1 last1,
 			     InputIterator2 first2, InputIterator2 last2) {
@@ -359,7 +380,7 @@ bool lexicographical_compare(InputIterator1 first1, InputIterator1 last1,
   }
   return first1 == last1 && first2 != last2;
 }
-
+//原生指针 const unsigned char* 类型
 inline bool 
 lexicographical_compare(const unsigned char* first1,
                         const unsigned char* last1,
@@ -371,7 +392,7 @@ lexicographical_compare(const unsigned char* first1,
   const int result = memcmp(first1, first2, min(len1, len2));
   return result != 0 ? result < 0 : len1 < len2;
 }
-
+// const char* 版本
 inline bool lexicographical_compare(const char* first1, const char* last1,
                                     const char* first2, const char* last2)
 {
