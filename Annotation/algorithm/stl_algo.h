@@ -2103,7 +2103,10 @@ bool includes(InputIterator1 first1, InputIterator1 last1,
 
   return first2 == last2;
 }
-
+/*
+*  算法 set_union 可构造 S1、S2 之并集
+*  S1 和 S2 及其并集都是以排序区间表示的
+*/
 template <class InputIterator1, class InputIterator2, class OutputIterator>
 OutputIterator set_union(InputIterator1 first1, InputIterator1 last1,
                          InputIterator2 first2, InputIterator2 last2,
@@ -2124,6 +2127,7 @@ OutputIterator set_union(InputIterator1 first1, InputIterator1 last1,
     }
     ++result;
   }
+  //一段到达尾端，则将剩余元素拷贝到目的端
   return copy(first2, last2, copy(first1, last1, result));
 }
 
@@ -2150,7 +2154,9 @@ OutputIterator set_union(InputIterator1 first1, InputIterator1 last1,
   }
   return copy(first2, last2, copy(first1, last1, result));
 }
-
+/*
+*  可构造出 S1 、S2 的交集
+*/
 template <class InputIterator1, class InputIterator2, class OutputIterator>
 OutputIterator set_intersection(InputIterator1 first1, InputIterator1 last1,
                                 InputIterator2 first2, InputIterator2 last2,
@@ -2187,7 +2193,9 @@ OutputIterator set_intersection(InputIterator1 first1, InputIterator1 last1,
     }
   return result;
 }
-
+/*
+*  构造出 S1、S2 的差集
+*/
 template <class InputIterator1, class InputIterator2, class OutputIterator>
 OutputIterator set_difference(InputIterator1 first1, InputIterator1 last1,
                               InputIterator2 first2, InputIterator2 last2,
@@ -2226,7 +2234,9 @@ OutputIterator set_difference(InputIterator1 first1, InputIterator1 last1,
     }
   return copy(first1, last1, result);
 }
-
+/*
+ 构造出对称差集 (S1 - S2) U (S2 - S1)
+*/
 template <class InputIterator1, class InputIterator2, class OutputIterator>
 OutputIterator set_symmetric_difference(InputIterator1 first1,
                                         InputIterator1 last1,
