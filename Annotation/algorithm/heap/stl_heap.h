@@ -28,6 +28,7 @@
  */
 
 /*
+*   heaps
 *   heap 并不属于 STL 容器组件，(更像是算法)充当 priority_queue 的助手
 *   vector 和 算法 结合实现的 heap
 *   完全二叉树，priority_queue 实际使用的 vector<T>充当的容器.
