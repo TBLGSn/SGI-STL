@@ -27,6 +27,9 @@
         "system_error": "cpp",
         "tuple": "cpp",
         "type_traits": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "unordered_set": "cpp"
     }
 }
