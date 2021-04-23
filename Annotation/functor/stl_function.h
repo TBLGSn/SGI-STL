@@ -134,13 +134,44 @@ template <class T>
 struct logical_not : public unary_function<T, bool> {
     bool operator()(const T& x) const { return !x; }
 };
+//选择元素
+template <class T>
+struct identity : public unary_function<T, T> {
+  const T& operator()(const T& x) const { return x; }
+};
 
-/////////////////////////////////////// 其他的 ??? /////////////////////
+template <class Pair>
+struct select1st : public unary_function<Pair, typename Pair::first_type> {
+  const typename Pair::first_type& operator()(const Pair& x) const
+  {
+    return x.first;
+  }
+};
+
+template <class Pair>
+struct select2nd : public unary_function<Pair, typename Pair::second_type> {
+  const typename Pair::second_type& operator()(const Pair& x) const
+  {
+    return x.second;
+  }
+};
+
+template <class Arg1, class Arg2>
+struct project1st : public binary_function<Arg1, Arg2, Arg1> {
+  Arg1 operator()(const Arg1& x, const Arg2&) const { return x; }
+};
+
+template <class Arg1, class Arg2>
+struct project2nd : public binary_function<Arg1, Arg2, Arg2> {
+  Arg2 operator()(const Arg1&, const Arg2& y) const { return y; }
+};
+
+/////////////////////////////////////// iterator adapter /////////////////////
 template <class Predicate>
 class unary_negate
   : public unary_function<typename Predicate::argument_type, bool> {
 protected:
-  Predicate pred;
+  Predicate pred; //内置 member object
 public:
   explicit unary_negate(const Predicate& x) : pred(x) {}
   bool operator()(const typename Predicate::argument_type& x) const {
@@ -152,7 +183,7 @@ template <class Predicate>
 inline unary_negate<Predicate> not1(const Predicate& pred) {
   return unary_negate<Predicate>(pred);
 }
-
+// 某个Adaptable Binary Predicate 的逻辑负值
 template <class Predicate> 
 class binary_negate 
   : public binary_function<typename Predicate::first_argument_type,
@@ -167,7 +198,6 @@ public:
     return !pred(x, y); 
   }
 };
-
 template <class Predicate>
 inline binary_negate<Predicate> not2(const Predicate& pred) {
   return binary_negate<Predicate>(pred);
@@ -223,7 +253,7 @@ inline binder2nd<Operation> bind2nd(const Operation& op, const T& x) {
   typedef typename Operation::second_argument_type arg2_type;
   return binder2nd<Operation>(op, arg2_type(x));
 }
-
+// 对于两个 Adaptable Unary Function f(),g(),产生一个 h() = f(g(x))
 template <class Operation1, class Operation2>
 class unary_compose : public unary_function<typename Operation2::argument_type,
                                             typename Operation1::result_type> {
@@ -234,16 +264,15 @@ public:
   unary_compose(const Operation1& x, const Operation2& y) : op1(x), op2(y) {}
   typename Operation1::result_type
   operator()(const typename Operation2::argument_type& x) const {
-    return op1(op2(x));
+    return op1(op2(x)); //函数合成
   }
 };
-
 template <class Operation1, class Operation2>
 inline unary_compose<Operation1, Operation2> compose1(const Operation1& op1, 
                                                       const Operation2& op2) {
   return unary_compose<Operation1, Operation2>(op1, op2);
 }
-
+// 合成, h(x) = f(g1(x), g2(x))
 template <class Operation1, class Operation2, class Operation3>
 class binary_compose
   : public unary_function<typename Operation2::argument_type,
@@ -260,23 +289,21 @@ public:
     return op1(op2(x), op3(x));
   }
 };
-
 template <class Operation1, class Operation2, class Operation3>
 inline binary_compose<Operation1, Operation2, Operation3> 
 compose2(const Operation1& op1, const Operation2& op2, const Operation3& op3) {
   return binary_compose<Operation1, Operation2, Operation3>(op1, op2, op3);
 }
-
+// 将一个一元函数指针封装起来
 template <class Arg, class Result>
 class pointer_to_unary_function : public unary_function<Arg, Result> {
 protected:
-  Result (*ptr)(Arg);
+  Result (*ptr)(Arg); //函数指针
 public:
   pointer_to_unary_function() {}
   explicit pointer_to_unary_function(Result (*x)(Arg)) : ptr(x) {}
   Result operator()(Arg x) const { return ptr(x); }
 };
-
 template <class Arg, class Result>
 inline pointer_to_unary_function<Arg, Result> ptr_fun(Result (*x)(Arg)) {
   return pointer_to_unary_function<Arg, Result>(x);
@@ -291,43 +318,13 @@ public:
     explicit pointer_to_binary_function(Result (*x)(Arg1, Arg2)) : ptr(x) {}
     Result operator()(Arg1 x, Arg2 y) const { return ptr(x, y); }
 };
-
 template <class Arg1, class Arg2, class Result>
 inline pointer_to_binary_function<Arg1, Arg2, Result> 
 ptr_fun(Result (*x)(Arg1, Arg2)) {
   return pointer_to_binary_function<Arg1, Arg2, Result>(x);
 }
-//选择元素
-template <class T>
-struct identity : public unary_function<T, T> {
-  const T& operator()(const T& x) const { return x; }
-};
 
-template <class Pair>
-struct select1st : public unary_function<Pair, typename Pair::first_type> {
-  const typename Pair::first_type& operator()(const Pair& x) const
-  {
-    return x.first;
-  }
-};
 
-template <class Pair>
-struct select2nd : public unary_function<Pair, typename Pair::second_type> {
-  const typename Pair::second_type& operator()(const Pair& x) const
-  {
-    return x.second;
-  }
-};
-
-template <class Arg1, class Arg2>
-struct project1st : public binary_function<Arg1, Arg2, Arg1> {
-  Arg1 operator()(const Arg1& x, const Arg2&) const { return x; }
-};
-
-template <class Arg1, class Arg2>
-struct project2nd : public binary_function<Arg1, Arg2, Arg2> {
-  Arg2 operator()(const Arg1&, const Arg2& y) const { return y; }
-};
 
 template <class Result>
 struct constant_void_fun
@@ -442,7 +439,7 @@ public:
 //  mem_fun1, and mem_fun1_ref, which create whichever type of adaptor
 //  is appropriate.
 
-
+// 用于成员函数指针,当容器的类型是 T& 或 T* ,我们又以虚拟成员函数作为仿函数,以此完成所谓的多态调用
 template <class S, class T>
 class mem_fun_t : public unary_function<T*, S> {
 public:

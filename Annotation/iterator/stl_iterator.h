@@ -322,12 +322,13 @@ inline void advance(InputIterator& i, Distance n) {
   __advance(i, n, iterator_category(i));
 }
 
+// 一种(insert)迭代器适配器
 template <class Container>
 class back_insert_iterator {
 protected:
-  Container* container;
+  Container* container; //底层容器
 public:
-  typedef output_iterator_tag iterator_category;
+  typedef output_iterator_tag iterator_category; //output_iterator_tag?? 
   typedef void                value_type;
   typedef void                difference_type;
   typedef void                pointer;
@@ -336,9 +337,10 @@ public:
   explicit back_insert_iterator(Container& x) : container(&x) {}
   back_insert_iterator<Container>&
   operator=(const typename Container::value_type& value) { 
-    container->push_back(value);
+    container->push_back(value); //关键,调用 push_back()
     return *this;
   }
+  // 关闭以下的运算,返回的它自己
   back_insert_iterator<Container>& operator*() { return *this; }
   back_insert_iterator<Container>& operator++() { return *this; }
   back_insert_iterator<Container>& operator++(int) { return *this; }
@@ -354,12 +356,11 @@ iterator_category(const back_insert_iterator<Container>&)
 }
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
 template <class Container>
 inline back_insert_iterator<Container> back_inserter(Container& x) {
   return back_insert_iterator<Container>(x);
 }
-
+// 一种(insert)迭代器适配器
 template <class Container>
 class front_insert_iterator {
 protected:
@@ -398,7 +399,7 @@ inline front_insert_iterator<Container> front_inserter(Container& x) {
   return front_insert_iterator<Container>(x);
 }
 /*
-  这个adapter 将iterator的赋值操作改变为安插操作,并将iterator右移一个位置
+  一种(insert)iterator适配器,这个adapter 将iterator的赋值操作改变为安插操作,并将iterator右移一个位置
   表面assgin，而实际上是 insert
 */
 template <class Container>
