@@ -37,20 +37,21 @@ __STL_BEGIN_NAMESPACE
 
   运算类 逻辑运算类 相互比较类
 */
-// 仿函数可适配的条件: 都应该从下面两者中继承其一,因为Adapter将会对functors"提问"
-//一元
+// 仿函数可适配的条件: 都应该从下面两者中继承其一,因为function Adapter将会对functors"提问"
+//一元仿函数
 template <class Arg, class Result>
 struct unary_function {
-    typedef Arg argument_type;
-    typedef Result result_type;
+    typedef Arg argument_type; //参数类型
+    typedef Result result_type;//返回值类型
 };
-//二元
+//二元仿函数
 template <class Arg1, class Arg2, class Result>
 struct binary_function {
     typedef Arg1 first_argument_type;
     typedef Arg2 second_argument_type;
     typedef Result result_type;
-};      
+};
+///////////////////////////////// 算术类仿函数 ////////////////////////////////
 //加法
 template <class T>
 struct plus : public binary_function<T, T, T> {
@@ -72,10 +73,6 @@ struct divides : public binary_function<T, T, T> {
     T operator()(const T& x, const T& y) const { return x / y; }
 };
 
-template <class T> inline T identity_element(plus<T>) { return T(0); }
-
-template <class T> inline T identity_element(multiplies<T>) { return T(1); }
-
 template <class T>
 struct modulus : public binary_function<T, T, T> {
     T operator()(const T& x, const T& y) const { return x % y; }
@@ -85,6 +82,11 @@ template <class T>
 struct negate : public unary_function<T, T> {
     T operator()(const T& x) const { return -x; }
 };
+// 下面两个并不属于 STL 标准规格中的一元,证同元素
+template <class T> inline T identity_element(plus<T>) { return T(0); }
+
+template <class T> inline T identity_element(multiplies<T>) { return T(1); }
+//////////////////////////////// 关系运算类 /////////////////////////////////////
 //相等
 template <class T>
 struct equal_to : public binary_function<T, T, bool> {
@@ -115,6 +117,8 @@ template <class T>
 struct less_equal : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x <= y; }
 };
+//////////////////////////////////////// 逻辑运算类 仿函数/////////////////////////
+
 //逻辑 && 
 template <class T>
 struct logical_and : public binary_function<T, T, bool> {
@@ -131,6 +135,7 @@ struct logical_not : public unary_function<T, bool> {
     bool operator()(const T& x) const { return !x; }
 };
 
+/////////////////////////////////////// 其他的 ??? /////////////////////
 template <class Predicate>
 class unary_negate
   : public unary_function<typename Predicate::argument_type, bool> {
@@ -192,7 +197,7 @@ inline binder1st<Operation> bind1st(const Operation& op, const T& x) {
   return binder1st<Operation>(op, arg1_type(x));  //隐藏的方式arg1_type(x)进行类型检测. 
 }
 /* 函数适配器 binder2nd
-    基础unary_function 的原因是，binder2nd作为整体也需要"回答问题"
+  继承unary_function 的原因是，binder2nd作为整体也需要"回答问题"
 */
 template <class Operation> 
 class binder2nd
