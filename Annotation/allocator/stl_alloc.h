@@ -1,9 +1,9 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
- */
 /*
-    真正使用的配置器
-*/
+ * 真正使用的配置器
+ * SGI 设计了双级的配置器,第一级直接使用 malloc 和 free,第二级,当配置区小于 128btype时,
+ * 采用 memory 管理方式,否则调用第一级配置器.
+ * 注意:这是一个内部头文件，由其他STL头文件包含。你不应该试图直接使用它。
+ */
 #ifndef __SGI_STL_INTERNAL_ALLOC_H
 #define __SGI_STL_INTERNAL_ALLOC_H
 
@@ -120,11 +120,12 @@ __STL_BEGIN_NAMESPACE
 # endif
 #endif
 
+////////////////////////////// 第一级配置器 ///////////////
 template <int inst>
 class __malloc_alloc_template {
 
 private:
-
+// 函数指针,所代表的函数将用来处理内存不足的情况
 static void *oom_malloc(size_t);
 
 static void *oom_realloc(void *, size_t);
@@ -137,8 +138,9 @@ public:
 
 static void * allocate(size_t n)
 {
-    void *result = malloc(n);
-    if (0 == result) result = oom_malloc(n);
+    void *result = malloc(n); //第一级配置器直接使用 malloc()
+    // 空间改用 oom_malloc()
+    if (0 == result) result = oom_malloc(n); 
     return result;
 }
 
@@ -153,7 +155,7 @@ static void * reallocate(void *p, size_t /* old_sz */, size_t new_sz)
     if (0 == result) result = oom_realloc(p, new_sz);
     return result;
 }
-
+// 指定自己的 out-of-memory handler
 static void (* set_malloc_handler(void (*f)()))()
 {
     void (* old)() = __malloc_alloc_oom_handler;
@@ -176,7 +178,7 @@ void * __malloc_alloc_template<inst>::oom_malloc(size_t n)
     void (* my_malloc_handler)();
     void *result;
 
-    for (;;) {
+    for (;;) { // 不断尝试释放,配置
         my_malloc_handler = __malloc_alloc_oom_handler;
         if (0 == my_malloc_handler) { __THROW_BAD_ALLOC; }
         (*my_malloc_handler)();
@@ -199,9 +201,9 @@ void * __malloc_alloc_template<inst>::oom_realloc(void *p, size_t n)
         if (result) return(result);
     }
 }
-
-typedef __malloc_alloc_template<0> malloc_alloc;
-
+// 参数 inst 为0
+typedef __malloc_alloc_template<0> malloc_alloc; 
+//这个接口使配置器单位从 bytes 转为个别元素的大小 sizeof(T). SGI-STL 的容器都使用这个接口
 template<class T, class Alloc>
 class simple_alloc {
 
@@ -262,7 +264,7 @@ static void * reallocate(void *p, size_t old_sz, size_t new_sz)
 
 # ifdef __USE_MALLOC
 
-typedef malloc_alloc alloc;
+typedef malloc_alloc alloc;  //第一级配置器
 typedef malloc_alloc single_client_alloc;
 
 # else
@@ -292,11 +294,14 @@ typedef malloc_alloc single_client_alloc;
 // creation of multiple default_alloc instances.
 // Node that containers built on different allocator instances have
 // different types, limiting the utility of this approach.
+
+////////////////////////// 第二级空间配置器/////////////////
+
 #ifdef __SUNPRO_CC
 // breaks if we make these template class members:
-  enum {__ALIGN = 8};
-  enum {__MAX_BYTES = 128};
-  enum {__NFREELISTS = __MAX_BYTES/__ALIGN};
+  enum {__ALIGN = 8}; // 8 bytes 内存对齐
+  enum {__MAX_BYTES = 128}; //区块的上界 128bytes   
+  enum {__NFREELISTS = __MAX_BYTES/__ALIGN}; // free-list 个数  
 #endif
 
 template <bool threads, int inst>
@@ -310,10 +315,12 @@ private:
     enum {__MAX_BYTES = 128};
     enum {__NFREELISTS = __MAX_BYTES/__ALIGN};
 # endif
+//将内存上调整成 8 的倍数
   static size_t ROUND_UP(size_t bytes) {
         return (((bytes) + __ALIGN-1) & ~(__ALIGN - 1));
   }
 __PRIVATE:
+  // 空闲内存 节点构造管理
   union obj {
         union obj * free_list_link;
         char client_data[1];    /* The client sees this.        */
@@ -426,7 +433,7 @@ public:
 
 } ;
 
-typedef __default_alloc_template<__NODE_ALLOCATOR_THREADS, 0> alloc;
+typedef __default_alloc_template<__NODE_ALLOCATOR_THREADS, 0> alloc; //第二级配置器
 typedef __default_alloc_template<false, 0> single_client_alloc;
 
 
