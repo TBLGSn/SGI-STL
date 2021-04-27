@@ -38,13 +38,18 @@ template <class T> inline void copy(T* source,T* destination,int n) {
 /*
    属于SGI,并不属于 STL,负责萃取 类型(不是迭代器)的 type 特性
 */
-//用类型表示“真假”,而不是 bool 类型
+//用class表示“真假”,而不是 bool 类型,用于重载机制
 struct __true_type {
 };
 
 struct __false_type {
 };
-//泛化版本
+/* SGI-STL 私房菜,用来萃取 type 的型别
+   例如: 这个类型是否具备 non-trivial default ctor ? non-trivial copy ctor?
+   是否具有non-assignment operator? 是否具有non-trivial dctor?
+   如果答案是否定的,则对这个类型进行构造,析构,拷贝,赋值等操作时,就可以采用更有效率的措施.
+   而不用调用没有实际用处的 construct,destruct 等
+*/
 template <class type>
 struct __type_traits { 
    typedef __true_type     this_dummy_member_must_be_first;

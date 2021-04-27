@@ -9,13 +9,15 @@
 #define __SGI_STL_INTERNAL_ITERATOR_H
 
 __STL_BEGIN_NAMESPACE
-//五种迭代器类型,继承关系
+//五种迭代器类型, ** 继承关系 **
 //可以考虑增加迭代器类型，如前进两个位置,实现双指针查找
 struct input_iterator_tag {};
 struct output_iterator_tag {};
 struct forward_iterator_tag : public input_iterator_tag {};
 struct bidirectional_iterator_tag : public forward_iterator_tag {};
 struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+
+// 定义的默认迭代器,继承并不会带来额外的负担
 
 template <class T, class Distance> struct input_iterator {
   typedef input_iterator_tag iterator_category;
@@ -59,7 +61,7 @@ template <class T, class Distance> struct random_access_iterator {
 };
 
 /*
-  迭代器类
+  迭代器基类
 */
 #ifdef __STL_USE_NAMESPACES
 template <class Category, class T, class Distance = ptrdiff_t,
@@ -107,6 +109,8 @@ struct iterator_traits<const T*> {
   typedef const T*                   pointer;
   typedef const T&                   reference;
 };
+
+//全局函数
 
 template <class Iterator>
 inline typename iterator_traits<Iterator>::iterator_category
