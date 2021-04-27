@@ -320,7 +320,7 @@ private:
         return (((bytes) + __ALIGN-1) & ~(__ALIGN - 1));
   }
 __PRIVATE:
-  // 空闲内存 节点构造管理
+  // 空闲内存 节点构造管理,注意是 union 所以并不需要额外的空间负担
   union obj {
         union obj * free_list_link;
         char client_data[1];    /* The client sees this.        */
@@ -330,8 +330,10 @@ private:
     static obj * __VOLATILE free_list[]; 
         // Specifying a size results in duplicate def for 4.1
 # else
+    // 16个 free-lists
     static obj * __VOLATILE free_list[__NFREELISTS]; 
 # endif
+    //决定使用第 n 号free-lists.( n 从1开始 )
   static  size_t FREELIST_INDEX(size_t bytes) {
         return (((bytes) + __ALIGN-1)/__ALIGN - 1);
   }
@@ -343,8 +345,8 @@ private:
   static char *chunk_alloc(size_t size, int &nobjs);
 
   // Chunk allocation state.
-  static char *start_free;
-  static char *end_free;
+    static char *start_free; //内存池起始位置  
+  static char *end_free; //内存池结束位置
   static size_t heap_size;
 
 # ifdef __STL_SGI_THREADS
@@ -432,7 +434,6 @@ public:
   static void * reallocate(void *p, size_t old_sz, size_t new_sz);
 
 } ;
-
 typedef __default_alloc_template<__NODE_ALLOCATOR_THREADS, 0> alloc; //第二级配置器
 typedef __default_alloc_template<false, 0> single_client_alloc;
 
