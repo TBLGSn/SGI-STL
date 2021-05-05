@@ -11,16 +11,18 @@ __STL_BEGIN_NAMESPACE
 #pragma set woff 1174
 #endif
 
-//单个节点，4.9版本不再使用void指针 
+//单个节点，4.9版本不再使用 void指针 
 template <class T>
 struct __list_node {
   typedef void* void_pointer;
+  // 双向链表节点
   void_pointer next;
   void_pointer prev;
   T data;
 };
 /*
-链表迭代器的“基结构”,4.9版本只有一个参数即可
+是一个双向迭代器
+链表迭代器的“基结构”, 4.9版本只有一个参数即可
   template <class T> 
   struct __list_iterator{
     typedef T* pointer;
@@ -105,6 +107,7 @@ distance_type(const __list_iterator<T, Ref, Ptr>&) {
 /*
   list主类，使用alloc作为默认配置器
   默认实现为环状双向链表
+  有一个假头结点
 */
 template <class T, class Alloc = alloc>
 class list {
@@ -305,7 +308,7 @@ public:
   list<T, Alloc>& operator=(const list<T, Alloc>& x);
 
 protected:
-  //迁移操作,将连续范围内的元素迁移到某一个位置
+  //迁移操作,将连续范围内的元素迁移到某一个位置 [first,last)迁移到 position 前
   void transfer(iterator position, iterator first, iterator last) {
     if (position != last) {
       (*(link_type((*last.node).prev))).next = position.node;
@@ -319,6 +322,7 @@ protected:
   }
 
 public:
+  // 将连续范围内的元素从一个 list 移动到另一个 list的某个定点
   void splice(iterator position, list& x) {
     if (!x.empty()) 
       transfer(position, x.begin(), x.end());
@@ -512,10 +516,15 @@ void list<T, Alloc>::reverse() {
     transfer(begin(), old, first);
   }
 }    
-
+/*
+ * 因为是 双向迭代器,所以不能使用 算法中的 sort 函数
+ * 这里采用的是 Qiuck sort
+ */
 template <class T, class Alloc>
 void list<T, Alloc>::sort() {
+  // 判断是否是空链表
   if (node->next == node || link_type(node->next)->next == node) return;
+  // 缓存区域
   list<T, Alloc> carry;
   list<T, Alloc> counter[64];
   int fill = 0;
