@@ -68,6 +68,3 @@ struct iterator_traits {
 ## 迭代器的类型
 ![iterator_hypotaxis.png](/image/iterator_hypotaxis.png)
 通过迭代器标签来实现的,以 class (struct) 实现,促进重载机制的成功运行. 通过继承关系实现的,我们可以不必再写 "单纯只做传递调用" 的函数.
-```c++
-
-```

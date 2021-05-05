@@ -14,7 +14,7 @@ __STL_BEGIN_NAMESPACE
   多数的容器都通过 “内含一个其他的容器”实现。
 
   vector最应该担心的是空间的“扩容问题”，当当前空间不够用时，我们不得不进行扩容操作
-  会调用大量的 copy 构造函数，和析解函数
+  会调用大量的 copy 构造函数，和析构函数
 */
 template <class T, class Alloc = alloc>
 class vector {
@@ -133,7 +133,7 @@ public:
   const_reference back() const { return *(end() - 1); }
   void push_back(const T& x) {
     if (finish != end_of_storage) { //还有剩余空间
-      construct(finish, x);
+      construct(finish, x); // 全局函数
       ++finish; //指针++
     }
     else
@@ -202,7 +202,7 @@ public:
 protected:
   //配置，而后填充
   iterator allocate_and_fill(size_type n, const T& x) {
-    iterator result = data_allocator::allocate(n);
+    iterator result = data_allocator::allocate(n);  
     __STL_TRY {
       uninitialized_fill_n(result, n, x);
       return result;
@@ -309,9 +309,8 @@ vector<T, Alloc>& vector<T, Alloc>::operator=(const vector<T, Alloc>& x) {
   }
   return *this;
 }
-
+//一旦引起内存的重新配置，则原来所有的迭代器都失效了
 template <class T, class Alloc>
-  //一旦引起内存的重新配置，则原来所有的迭代器都失效了
 void vector<T, Alloc>::insert_aux(iterator position, const T& x) {
   if (finish != end_of_storage) { //还有剩余空间
     construct(finish, *(finish - 1));
@@ -341,8 +340,11 @@ void vector<T, Alloc>::insert_aux(iterator position, const T& x) {
       throw;
     }
 #       endif /* __STL_USE_EXCEPTIONS */
+
+    // 销毁原空间
     destroy(begin(), end());
     deallocate();
+
     start = new_start;
     finish = new_finish;
     end_of_storage = new_start + len;
@@ -352,17 +354,20 @@ void vector<T, Alloc>::insert_aux(iterator position, const T& x) {
 template <class T, class Alloc>
 void vector<T, Alloc>::insert(iterator position, size_type n, const T& x) {
   if (n != 0) {
+    //备用空间大于 "新增元素个数  "
     if (size_type(end_of_storage - finish) >= n) {
       T x_copy = x;
       const size_type elems_after = finish - position;
       iterator old_finish = finish;
+      // "插入点之前的元素" 大于 "新增元素个数"
       if (elems_after > n) {
         uninitialized_copy(finish - n, finish, finish);
         finish += n;
         copy_backward(position, old_finish - n, old_finish);
         fill(position, position + n, x_copy);
       }
-      else {
+      // "插入点之前的元素" 小于 "新增元素个数"
+      else { 
         uninitialized_fill_n(finish, n - elems_after, x_copy);
         finish += n - elems_after;
         uninitialized_copy(position, old_finish, finish);
@@ -370,7 +375,7 @@ void vector<T, Alloc>::insert(iterator position, size_type n, const T& x) {
         fill(position, old_finish, x_copy);
       }
     }
-    else {
+    else { // 配置新空间
       const size_type old_size = size();        
       const size_type len = old_size + max(old_size, n);
       iterator new_start = data_allocator::allocate(len);
