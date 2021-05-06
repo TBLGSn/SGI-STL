@@ -67,18 +67,17 @@ inline size_t __deque_buf_size(size_t n, size_t sz)
 }
 
 /*
-*     deque的迭代器 (一种Ramdon Access Iterator),并不是用的raw 指针的方式，而是设计成类的形式，
-*   究其原因在于 deque 的空间管理方式, 并不同vector一样.deque 要提供两端
-*   进出的能力，很显然基于性能的考虑，得有其独特的内存管理饭方式.
+*   deque的迭代器 (一种Ramdon Access Iterator),并不是用的raw 指针的方式，而
+*   是设计成类的形式，究其原因在于 deque 的空间管理方式, 并不同vector一样.deque 
+*   要提供两端,进出的能力，而vector只能在后端追加空间
+*   很显然基于性能的考虑，得有其独特的内存管理饭方式.
 *   事实上deque的内存管理，是通过分段的空间来模拟“连续”的空间(为其提供连续的空间).
 *   一旦有必要，则在 deque 的前端或尾端增加新的空间.
 *   避免了(如果同vector一样的)“重新配置、复杂、释放”，代价则是复杂的迭代器架构.
 */
 
 #ifndef __STL_NON_TYPE_TMPL_PARAM_BUG
-/*
-  
-*/
+
 template <class T, class Ref, class Ptr, size_t BufSiz>
 struct __deque_iterator {
   typedef __deque_iterator<T, T&, T*, BufSiz>             iterator;
@@ -107,7 +106,7 @@ struct __deque_iterator {
   T* cur;   // 指向当前元素（在当前缓冲区, 对于头迭代器指向 deque逻辑上的头元素 || 对于尾迭代器指向 deque逻辑上的尾元素）
   T* first; //缓存区头部
   T* last;  //缓存区尾部
-  map_pointer node; //T**指向控制中心中的元素
+  map_pointer node; //T**指向控制中心中的 **元素**
 
   __deque_iterator(T* x, map_pointer y) 
     : cur(x), first(*y), last(*y + buffer_size()), node(y) {}
@@ -154,7 +153,7 @@ struct __deque_iterator {
     return tmp;
   }
 /*  实现随机存取，迭代器可以直接跳跃 n 个距离
- * //为什么不调用 n 次 ++ ？ 
+ * 为什么还调用 n 次 ++ ？ 
  */
   
   self& operator+=(difference_type n) {
@@ -248,6 +247,7 @@ inline ptrdiff_t* distance_type(const __deque_iterator<T, Ref, Ptr>&) {
   精华部分在于 :
       1. 迭代器如何模拟连续空间(动态分段连续空间组合而成)
       2. deque类如何管理空间(对于buffer个数的维护)
+      3. 拥有两个空间配置器
 */
 //BufSize : 每一个buffer的大小
 template <class T, class Alloc = alloc, size_t BufSiz = 0> 
@@ -295,8 +295,9 @@ protected:                      // Internal typedefs
 
 protected:                      // Data members
   /*前指针,指向的是某一个buffer
-    而buffer其中的cur，表示的是buffer中的一个元素(表示逻辑上第一个元素)
-    buffer中的frist,end指出buffer中未使用元素的空间
+    start 的cur 指向逻辑上的第一个元素
+    finish 的 cur 指向逻辑上的最后一个元素
+    iterator中的frist, last指出buffer的头和尾
   */
   iterator start;   
   //后指针,原理同上  
@@ -446,11 +447,12 @@ public:                         // Constructor, destructor.
 public:                         // push_* and pop_*
   
   void push_back(const value_type& t) {
+    // 最后一个缓存区还有备用空间
     if (finish.cur != finish.last - 1) {
-      construct(finish.cur, t);
+      construct(finish.cur, t); //在备用空间上构造元素
       ++finish.cur;
     }
-    else
+    else // 已无备用元素或只剩下一个元素的备用空间
       push_back_aux(t);
   }
 
@@ -639,10 +641,11 @@ protected:                      // Allocation of map and nodes
   //  deque iterators.)
 
   void reserve_map_at_back (size_type nodes_to_add = 1) {
+    // map 尾端的节点不够用
     if (nodes_to_add + 1 > map_size - (finish.node - map))
       reallocate_map(nodes_to_add, false);
   }
-
+    //map 前段的节点不够用
   void reserve_map_at_front (size_type nodes_to_add = 1) {
     if (nodes_to_add > start.node - map)
       reallocate_map(nodes_to_add, true);
@@ -795,17 +798,18 @@ void deque<T, Alloc, BufSize>::clear() {
 */
 template <class T, class Alloc, size_t BufSize>
 void deque<T, Alloc, BufSize>::create_map_and_nodes(size_type num_elements) {
-  // 元素的个数/每一个缓冲区可容纳的元素个数 + 1
+  // 需要节点数 = 元素的个数/每一个缓冲区可容纳的元素个数 + 1
   size_type num_nodes = num_elements / buffer_size() + 1;
-  //一个 map 要管理几个节点，最少 8 个，最多是“所需节点数加2”
+  //一个 map 要管理几个节点，最少 8 个，最多是“所需节点数加2”(先预留两个节点,以免内存扩充的时候使用)
   map_size = max(initial_map_size(), num_nodes + 2);
   map = map_allocator::allocate(map_size);
-
+  //先指向 map 的中间区域,避免当对两端插入元素时的内存扩充
   map_pointer nstart = map + (map_size - num_nodes) / 2;
   map_pointer nfinish = nstart + num_nodes - 1;
     
   map_pointer cur;
   __STL_TRY {
+    // map 每一个节点配置 buffer
     for (cur = nstart; cur <= nfinish; ++cur)
       *cur = allocate_node();
   }
@@ -887,8 +891,8 @@ void deque<T, Alloc, BufSize>::range_initialize(ForwardIterator first,
 template <class T, class Alloc, size_t BufSize>
 void deque<T, Alloc, BufSize>::push_back_aux(const value_type& t) {
   value_type t_copy = t;
-  reserve_map_at_back();
-  *(finish.node + 1) = allocate_node();
+  reserve_map_at_back(); //如果符合条件则需要重新换一个 map
+  *(finish.node + 1) = allocate_node(); //配置一个新 buffer
   __STL_TRY {
     construct(finish.cur, t_copy);
     finish.set_node(finish.node + 1);

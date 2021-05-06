@@ -11,6 +11,7 @@
         - [其他容器](Annotation/container/other_container)        
     * [算法(algorithm)](Annotation/algorithm)
     * [仿函数(functor)](Annotation/functor)
+    <!-- 没提供字符串 functor -->
     * [适配器(adapter)](Annotation/adapter)
 
 ## 学习路线
