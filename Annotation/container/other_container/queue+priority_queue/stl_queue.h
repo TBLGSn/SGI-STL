@@ -53,7 +53,7 @@ template <class T, class Sequence = vector<T>,
 template <class T, class Sequence, class Compare>
 #endif
 /*
-  
+  优先队列,并不归于一个 容器,而应该属于 container adapter
 */
 class  priority_queue {
 public:
@@ -62,7 +62,7 @@ public:
   typedef typename Sequence::reference reference;
   typedef typename Sequence::const_reference const_reference;
 protected:
-  Sequence c;
+  Sequence c; // 底层容器: 堆
   Compare comp;
 public:
   priority_queue() : c() {}
@@ -89,7 +89,7 @@ public:
   const_reference top() const { return c.front(); }
   void push(const value_type& x) {
     __STL_TRY {
-      c.push_back(x); 
+      c.push_back(x); // 将新元素压入到 vector 的末端
       push_heap(c.begin(), c.end(), comp);
     }
     __STL_UNWIND(c.clear());
