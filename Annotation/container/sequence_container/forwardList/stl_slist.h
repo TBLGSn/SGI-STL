@@ -178,7 +178,7 @@ inline size_t __slist_size(__slist_node_base* node)
   return result;
 }
 /*
-* 
+* 单向链表,不属于 STL 标准
 */
 template <class T, class Alloc = alloc>
 class slist
