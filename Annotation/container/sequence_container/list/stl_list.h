@@ -223,6 +223,9 @@ public:
     return const_reverse_iterator(begin());
   } 
   bool empty() const { return node->next == node; }
+  /*借助 distance  实现，所以代价为 O(n)
+    这时，empty() 优于 size() == 0 
+  */
   size_type size() const {
     size_type result = 0;
     distance(begin(), end(), result);
