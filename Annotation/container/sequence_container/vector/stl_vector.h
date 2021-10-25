@@ -139,6 +139,7 @@ public:
     else
       insert_aux(end(), x);
   }
+  // STL 容器提供了 public 的内置的 swap 成员函数,但调用的是 std::swap 特化版本(具体区别详见 effective C++ item 25)
   void swap(vector<T, Alloc>& x) {
     __STD::swap(start, x.start);
     __STD::swap(finish, x.finish);
