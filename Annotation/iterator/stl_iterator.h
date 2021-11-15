@@ -1,10 +1,11 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
- */
 /*
-  STL 的中心思想，是将数据结构(containers)和算法(algorithms)分开,彼此独立设计，而用
-  迭代器 iterator 充当两者之间的 “胶粘剂”
-*/
+ * @Author: tblgsn
+ * @Date: 2021-10-05 09:58:18
+ * @Description:  STL 的中心思想，是将数据结构(containers)和算法(algorithms)分开,彼此独立设计，而用
+                  迭代器 iterator 充当两者之间的 “胶粘剂”
+ * @FilePath: /SGI-STL/Annotation/iterator/stl_iterator.h
+ */
+
 #ifndef __SGI_STL_INTERNAL_ITERATOR_H
 #define __SGI_STL_INTERNAL_ITERATOR_H
 
