@@ -1,9 +1,11 @@
 /*
- * 真正使用的配置器
- * SGI 设计了双级的配置器,第一级直接使用 malloc 和 free,第二级,当配置区小于 128btype时,
- * 采用 memory 管理方式,否则调用第一级配置器.
- * 注意:这是一个内部头文件，由其他STL头文件包含。你不应该试图直接使用它。
+ * @Author: tblgsn
+ * @Date: 2021-10-05 09:58:18
+ * @Description: 真正使用的配置器. SGI 设计了双级的配置器,第一级直接使用 malloc 和 free,第二级,
+ *                             当配置区小于 128btype时,采用 memory pool 管理方式
+ * @FilePath: /SGI-STL/Annotation/allocator/stl_alloc.h
  */
+
 #ifndef __SGI_STL_INTERNAL_ALLOC_H
 #define __SGI_STL_INTERNAL_ALLOC_H
 
@@ -120,12 +122,12 @@ __STL_BEGIN_NAMESPACE
 # endif
 #endif
 
-////////////////////////////// 第一级配置器 ///////////////
+////////////////////////////// 第一级配置器 //////////////////////////////////////////////
 template <int inst>
 class __malloc_alloc_template {
 
 private:
-// 函数指针,所代表的函数将用来处理内存不足的情况
+// 函数指针,所代表的函数将用来处理内存不足的情况 ( 模拟 set_new_handler() )
 static void *oom_malloc(size_t);
 
 static void *oom_realloc(void *, size_t);
@@ -139,16 +141,16 @@ public:
 static void * allocate(size_t n)
 {
     void *result = malloc(n); //第一级配置器直接使用 malloc()
-    // 空间改用 oom_malloc()
+    // 内存空间不够时，改用 oom_malloc()
     if (0 == result) result = oom_malloc(n); 
     return result;
 }
 
 static void deallocate(void *p, size_t /* n */)
 {
-    free(p);
+    free(p); // 直接使用 free 函数
 }
-
+    
 static void * reallocate(void *p, size_t /* old_sz */, size_t new_sz)
 {
     void * result = realloc(p, new_sz);
@@ -295,7 +297,7 @@ typedef malloc_alloc single_client_alloc;
 // Node that containers built on different allocator instances have
 // different types, limiting the utility of this approach.
 
-////////////////////////// 第二级空间配置器/////////////////
+////////////////////////// 第二级空间配置器/////////////////////////////////////////
 
 #ifdef __SUNPRO_CC
 // breaks if we make these template class members:
