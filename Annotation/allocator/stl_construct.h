@@ -1,5 +1,9 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
+/*
+ * @Author: tblgsn
+ * @Date: 2021-10-05 09:58:18
+ * @Description: 主要实现了 construct 和 destroy 全局函数,分别负责对象的构造和析构
+ *                  值得注意的一点是，全部被声明为 inline 
+ * @FilePath: /SGI-STL/Annotation/allocator/stl_construct.h
  */
 
 #ifndef __SGI_STL_INTERNAL_CONSTRUCT_H
@@ -13,13 +17,19 @@ template <class T1, class T2>
 inline void construct(T1* p, const T2& value) {
   new (p) T1(value); // 调用T1::T1(value)
 }
-// destroy 的第一个版本
+/*
+  destroy 的第一个版本,接受的是一个指针
+*/
 template <class T>
 inline void destroy(T* pointer) {
     pointer->~T(); // 调用dctor ~T()
 }
 
-// destroy 的第二个版本
+/**
+ * @description: destroy 的第二个版本,根据第三个参数调用不同的最优版本
+ * @param {迭代器，和元素的数值型别}
+ */
+
 template <class ForwardIterator> 
 inline void __destroy_aux(ForwardIterator, ForwardIterator, __true_type) {}
 
@@ -43,6 +53,7 @@ inline void destroy(ForwardIterator first, ForwardIterator last) {
   // 利用 类型的 value_type   调用最佳版本
   __destroy(first, last, value_type(first));
 }
+
 // 第二版本对于 char* 和 wchar_t* 的特化版本
 inline void destroy(char*, char*) {}
 inline void destroy(wchar_t*, wchar_t*) {}
