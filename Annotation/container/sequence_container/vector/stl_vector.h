@@ -1,5 +1,10 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
+/*
+ * @Author: tblgsn
+ * @Date: 2021-11-02 10:01:21
+ * @Description:  多数的容器都通过 “内含一个其他的容器”实现。
+ *                vector最应该担心的是空间的“扩容问题”，当当前空间不够用时，
+ *                我们不得不进行扩容操作,会调用大量的 copy 构造函数，和析构函数
+ * @FilePath: /SGI-STL/Annotation/container/sequence_container/vector/stl_vector.h
  */
 
 #ifndef __SGI_STL_INTERNAL_VECTOR_H
@@ -10,12 +15,7 @@ __STL_BEGIN_NAMESPACE
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
 #endif
-/*
-  多数的容器都通过 “内含一个其他的容器”实现。
 
-  vector最应该担心的是空间的“扩容问题”，当当前空间不够用时，我们不得不进行扩容操作
-  会调用大量的 copy 构造函数，和析构函数
-*/
 template <class T, class Alloc = alloc>
 class vector {
 
@@ -45,8 +45,8 @@ protected:
   
   /*
     三个指针完成对于vector的实现
-    start ：空间的头
-    finish : 空间的尾
+    start  : 已用空间的头
+    finish : 已用空间的尾
     end_of_storage : 表示目前空间的尾
   */
   iterator start;
@@ -88,6 +88,7 @@ public:
   vector(size_type n, const T& value) { fill_initialize(n, value); }
   vector(int n, const T& value) { fill_initialize(n, value); }
   vector(long n, const T& value) { fill_initialize(n, value); }
+  //被声明为 explicit，使得 vector('a') 之类代码的不能通过编译
   explicit vector(size_type n) { fill_initialize(n, T()); }
 
   vector(const vector<T, Alloc>& x) {

@@ -1,5 +1,8 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
+/*
+ * @Author: tblgsn
+ * @Date: 2021-10-05 09:58:18
+ * @Description: 链表，被实现为双向循环链表
+ * @FilePath: /SGI-STL/Annotation/container/sequence_container/list/stl_list.h
  */
 
 #ifndef __SGI_STL_INTERNAL_LIST_H
