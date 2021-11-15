@@ -1,5 +1,8 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
+/*
+ * @Author: tblgsn
+ * @Date: 2021-10-05 09:58:18
+ * @Description: STL 定义有五个全局函数,这里是 除去 construct 和 destroy 之外的剩余三个函数.
+ * @FilePath: /SGI-STL/Annotation/allocator/stl_uninitialized.h
  */
 
 #ifndef __SGI_STL_INTERNAL_UNINITIALIZED_H
@@ -7,8 +10,10 @@
 
 __STL_BEGIN_NAMESPACE
 
-// Valid if copy construction is equivalent to assignment, and if the
-//  destructor is trivial.
+/**
+ * @description: 先利用萃取器萃取出迭代器的 value_type,再判断是否是 POD 类型，分别调用 construct 和 高级的 copy 函数.
+ * 对于特定版本则调用 memmove 函数(根据value_type 判断)
+ */
 template <class InputIterator, class ForwardIterator>
 inline ForwardIterator 
 __uninitialized_copy_aux(InputIterator first, InputIterator last,
@@ -44,7 +49,7 @@ template <class InputIterator, class ForwardIterator>
 inline ForwardIterator
   uninitialized_copy(InputIterator first, InputIterator last,
                      ForwardIterator result) {
-  return __uninitialized_copy(first, last, result, value_type(result));
+  return __uninitialized_copy(first, last, result, value_type(result)); 
 }
 
 inline char* uninitialized_copy(const char* first, const char* last,
@@ -97,7 +102,7 @@ inline void
 __uninitialized_fill_aux(ForwardIterator first, ForwardIterator last, 
                          const T& x, __true_type)
 {
-  fill(first, last, x);
+  fill(first, last, x); 
 }
 
 template <class ForwardIterator, class T>
