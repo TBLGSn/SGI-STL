@@ -1,5 +1,9 @@
-/* NOTE: This is an internal header file, included by other STL headers.
- *   You should not attempt to use it directly.
+/*
+ * @Author: tblgsn
+ * @Date: 2021-10-05 09:58:18
+ * @Description: deque 是允许两端进行操作的数据结构， 正是因为这样的特性，在实现上通过 map 作为主控来避免
+ *               效率的底下(尤其是对于头部的操作)。
+ * @FilePath: /SGI-STL/Annotation/container/sequence_container/deque/stl_deque.h
  */
 
 #ifndef __SGI_STL_INTERNAL_DEQUE_H
@@ -61,6 +65,12 @@ __STL_BEGIN_NAMESPACE
 
 // Note: this function is simply a kludge to work around several compilers'
 //  bugs in handling constant expressions
+/**
+ * @description: 决定每一个缓冲区的大小
+ * @param {size_t} n 
+ * @param {size_t} sz
+ * @return {size_t}
+ */
 inline size_t __deque_buf_size(size_t n, size_t sz)
 {
   return n != 0 ? n : (sz < 512 ? size_t(512 / sz) : size_t(1));
@@ -68,12 +78,12 @@ inline size_t __deque_buf_size(size_t n, size_t sz)
 
 /*
 *   deque的迭代器 (一种Ramdon Access Iterator),并不是用的raw 指针的方式，而
-*   是设计成类的形式，究其原因在于 deque 的空间管理方式, 并不同vector一样.deque 
-*   要提供两端,进出的能力，而vector只能在后端追加空间
-*   很显然基于性能的考虑，得有其独特的内存管理饭方式.
-*   事实上deque的内存管理，是通过分段的空间来模拟“连续”的空间(为其提供连续的空间).
+*   是设计成类的形式，究其原因在于 deque 的空间管理方式, 并不同vector一样.
+*   deque 要提供两端进出的能力，而vector只能在后端追加空间,很显然基于性能的考虑，
+*   我们得为其提供独特的内存管理方式.
+*   事实上deque的内存管理，是通过分段的空间来模拟“连续”的空间(为其提供逻辑上连续的空间).
 *   一旦有必要，则在 deque 的前端或尾端增加新的空间.
-*   避免了(如果同vector一样的)“重新配置、复杂、释放”，代价则是复杂的迭代器架构.
+*   避免了(如果同vector一样的)“重新配置、复杂、释放”，为此我们付出的代价则是复杂的迭代器架构.
 */
 
 #ifndef __STL_NON_TYPE_TMPL_PARAM_BUG
@@ -106,7 +116,7 @@ struct __deque_iterator {
   T* cur;   // 指向当前元素（在当前缓冲区, 对于头迭代器指向 deque逻辑上的头元素 || 对于尾迭代器指向 deque逻辑上的尾元素）
   T* first; //缓存区头部
   T* last;  //缓存区尾部
-  map_pointer node; //T**指向控制中心中的 **元素**
+  map_pointer node; //T**类型,指向控制中心
 
   __deque_iterator(T* x, map_pointer y) 
     : cur(x), first(*y), last(*y + buffer_size()), node(y) {}
@@ -152,15 +162,14 @@ struct __deque_iterator {
     --*this;
     return tmp;
   }
-/*  实现随机存取，迭代器可以直接跳跃 n 个距离
- * 为什么还调用 n 次 ++ ？ 
- */
-  
+	/*  实现随机存取，迭代器可以直接跳跃 n 个距离
+	* 为什么还调用 n 次 ++ ？ 
+	*/
   self& operator+=(difference_type n) {
     difference_type offset = n + (cur - first);
 
     if (offset >= 0 && offset < difference_type(buffer_size()))
-    //还在当前buffer
+    //还在当前buffer中
       cur += n;
     else {
       difference_type node_offset =
@@ -242,14 +251,15 @@ inline ptrdiff_t* distance_type(const __deque_iterator<T, Ref, Ptr>&) {
 // See __deque_buf_size().  The only reason that the default value is 0
 //  is as a workaround for bugs in the way that some compilers handle
 //  constant expressions.
-/*
-  deque的具体实现很复杂，需要详细分析理解
-  精华部分在于 :
-      1. 迭代器如何模拟连续空间(动态分段连续空间组合而成)
-      2. deque类如何管理空间(对于buffer个数的维护)
-      3. 拥有两个空间配置器
-*/
-//BufSize : 每一个buffer的大小
+
+/**
+ * @description: deque的具体实现很复杂，需要详细分析理解
+                精华部分在于 :
+					1. 迭代器如何模拟连续空间(动态分段连续空间组合而成)
+					2. deque类如何管理空间(对于buffer个数的维护)
+					3. 拥有两个空间配置器
+ * @param {BufSize : 每一个buffer的大小}
+ */
 template <class T, class Alloc = alloc, size_t BufSiz = 0> 
 class deque {
 public:                         // Basic types
@@ -295,7 +305,7 @@ protected:                      // Internal typedefs
 
 protected:                      // Data members
   /*前指针,指向的是某一个buffer
-    start 的cur 指向逻辑上的第一个元素
+    start 的 cur 指向逻辑上的第一个元素
     finish 的 cur 指向逻辑上的最后一个元素
     iterator中的frist, last指出buffer的头和尾
   */
@@ -320,7 +330,7 @@ public:                         // Basic accessors
   const_reverse_iterator rend() const {
     return const_reverse_iterator(start);
   }
-
+  // 调用迭代器的 operator[]
   reference operator[](size_type n) { return start[difference_type(n)]; }
   const_reference operator[](size_type n) const {
     return start[difference_type(n)];
