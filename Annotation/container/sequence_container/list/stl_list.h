@@ -32,7 +32,7 @@ struct __list_node {
     typedef T& reference;
     ...
 }
-迭代器的类型不再像 vector 一样是一个指针类型.，而是一个类
+迭代器的类型不再像 vector 一样是一个指针类型.，而是一个类(为什么?)
 */
 template<class T, class Ref, class Ptr>
 struct __list_iterator {
@@ -49,7 +49,7 @@ struct __list_iterator {
   typedef __list_node<T>* link_type; 
   typedef size_t size_type;
 
-  link_type node; //指针,指向 list 的节点
+  link_type node; //普通指针,指向 list 的节点
 
   __list_iterator(link_type x) : node(x) {}
   __list_iterator() {}
@@ -110,7 +110,7 @@ distance_type(const __list_iterator<T, Ref, Ptr>&) {
 /*
   list主类，使用alloc作为默认配置器
   默认实现为环状双向链表
-  有一个假头结点
+  尾部有一个空白节点，这样指针 node 就能轻易的满足“左闭右开”原则
 */
 template <class T, class Alloc = alloc>
 class list {
@@ -207,7 +207,7 @@ protected:
 #endif /* __STL_MEMBER_TEMPLATES */
 
 protected:
-  link_type node; // 一个指向节点的指针
+  link_type node; // 一个指向空白尾节点的指针
 
 public:
   //默认头节点

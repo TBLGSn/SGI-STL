@@ -2,7 +2,7 @@
  * @Author: tblgsn
  * @Date: 2021-10-05 09:58:18
  * @Description: deque 是允许两端进行操作的数据结构， 正是因为这样的特性，在实现上通过 map 作为主控来避免
- *               效率的底下(尤其是对于头部的操作)。
+ *               效率的底下(尤其是对于头部的操作)。由于这种内存管理方式，没有提供“空间保留reserve 功能”。
  * @FilePath: /SGI-STL/Annotation/container/sequence_container/deque/stl_deque.h
  */
 
