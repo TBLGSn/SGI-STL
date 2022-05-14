@@ -34,8 +34,8 @@ STL 标准中，并没有区分 基本算法或复杂算法，然而 SGI 将一�
 #endif
 
 __STL_BEGIN_NAMESPACE
-/* 将 两个 ForwardIterator 所指对象对调，第三参数并没有定义参数命,更重要的是
-  利用了 C++ 的参数推导
+/* 将 两个 ForwardIterator 所指对象对调，第三参数并没有定义参数名称,使用了
+  利用了 C++ 的参数推导机制
 */
 template <class ForwardIterator1, class ForwardIterator2, class T>
 inline void __iter_swap(ForwardIterator1 a, ForwardIterator2 b, T*) {
@@ -45,7 +45,7 @@ inline void __iter_swap(ForwardIterator1 a, ForwardIterator2 b, T*) {
 }
 /*
 * 不借助 _iter_swap 辅助函数的话,iter_swap 就应该这样写
-* typename iterator_traits<ForwardIterator1>::value_type tmp = *a;
+* typename iterator_traits<ForwardIterator>::value_type tmp = *a;
 * *a = *b;
 * *b = tmp;
 */
@@ -91,7 +91,57 @@ inline const T& max(const T& a, const T& b, Compare comp) {
 * 因为 copy 函数，常常被调用,所以 STL 对其做了特别优化
 */
 
-//InputIterator 版本
+//1. copy 函数的对外接口,完全泛化版本
+template <class InputIterator, class OutputIterator>
+inline OutputIterator copy(InputIterator first, InputIterator last,
+                           OutputIterator result)
+{
+  return __copy_dispatch<InputIterator,OutputIterator>()(first, last, result);
+}
+//2. 重载,对于 原生指针 const char* 版本
+inline char* copy(const char* first, const char* last, char* result) {
+  memmove(result, first, last - first);
+  return result + (last - first);
+}
+//3. 重载,对于 原生版本 const wchar_t* 版本
+inline wchar_t* copy(const wchar_t* first, const wchar_t* last,
+                     wchar_t* result) {
+  memmove(result, first, sizeof(wchar_t) * (last - first));
+  return result + (last - first);
+}
+
+/*
+*  __copy_dispatch 共有三个版本
+*/
+//1. 完全泛化版本,针对不同种类的迭代器所使用的 _copy 版本也不一样
+template <class InputIterator, class OutputIterator>
+struct __copy_dispatch
+{
+  OutputIterator operator()(InputIterator first, InputIterator last,
+                            OutputIterator result) {
+    return __copy(first, last, result, iterator_category(first));
+  }
+};
+//偏特化版本二
+template <class T>
+struct __copy_dispatch<T*, T*>
+{
+  T* operator()(T* first, T* last, T* result) {
+    typedef typename __type_traits<T>::has_trivial_assignment_operator t; 
+    return __copy_t(first, last, result, t());
+  }
+};
+//偏特化版本三
+template <class T>
+struct __copy_dispatch<const T*, T*>
+{
+  T* operator()(const T* first, const T* last, T* result) {
+    typedef typename __type_traits<T>::has_trivial_assignment_operator t; 
+    return __copy_t(first, last, result, t());
+  }
+};
+
+//__copy 的 InputIterator 版本
 template <class InputIterator, class OutputIterator>
 inline OutputIterator __copy(InputIterator first, InputIterator last,
                              OutputIterator result, input_iterator_tag)
@@ -100,6 +150,32 @@ inline OutputIterator __copy(InputIterator first, InputIterator last,
     *result = *first;
   return result;
 }
+//__copy 的 RandomAccessIterator 版本,调用_copy_d
+template <class RandomAccessIterator, class OutputIterator>
+inline OutputIterator 
+__copy(RandomAccessIterator first, RandomAccessIterator last,
+       OutputIterator result, random_access_iterator_tag)
+{
+  return __copy_d(first, last, result, distance_type(first));
+}
+
+
+
+//__copy_dispatch 的偏特化版本三 对应的函数
+//以下版本适用于 “指针所指对象具有 trivial assignment operator”
+template <class T>
+inline T* __copy_t(const T* first, const T* last, T* result, __true_type) {
+  memmove(result, first, sizeof(T) * (last - first));
+  return result + (last - first);
+}
+//__copy_dispatch 的偏特化版本三 对应的函数
+//以下版本适用于 “指针所指对象具有 non-trivial assignment operator”
+template <class T>
+inline T* __copy_t(const T* first, const T* last, T* result, __false_type) {
+  //原生指针 毕竟是一种 RandomAccessIterator,所以交给 _copy_d() 完成
+  return __copy_d(first, last, result, (ptrdiff_t*) 0);
+}
+
 template <class RandomAccessIterator, class OutputIterator, class Distance>
 inline OutputIterator
 __copy_d(RandomAccessIterator first, RandomAccessIterator last,
@@ -110,80 +186,7 @@ __copy_d(RandomAccessIterator first, RandomAccessIterator last,
     *result = *first;
   return result;
 }
-//RandomAccessIterator 版本,调用_copy_d
-template <class RandomAccessIterator, class OutputIterator>
-inline OutputIterator 
-__copy(RandomAccessIterator first, RandomAccessIterator last,
-       OutputIterator result, random_access_iterator_tag)
-{
-  return __copy_d(first, last, result, distance_type(first));
-}
 
-/*
-*  __copy_dispatch 共有三个版本
-*/
-//完全泛化版本,针对不同种类的迭代器所使用的 _copy 版本也不一样
-template <class InputIterator, class OutputIterator>
-struct __copy_dispatch
-{
-  OutputIterator operator()(InputIterator first, InputIterator last,
-                            OutputIterator result) {
-    return __copy(first, last, result, iterator_category(first));
-  }
-};
-#ifdef __STL_CLASS_PARTIAL_SPECIALIZATION 
-//以下版本适用于 “指针所指对象具有 trivial assignment operator”
-template <class T>
-inline T* __copy_t(const T* first, const T* last, T* result, __true_type) {
-  memmove(result, first, sizeof(T) * (last - first));
-  return result + (last - first);
-}
-//以下版本适用于 “指针所指对象具有 non-trivial assignment operator”
-
-template <class T>
-inline T* __copy_t(const T* first, const T* last, T* result, __false_type) {
-  //原生指针 毕竟是一种 RandomAccessIterator,所以交给 _copy_d() 完成
-  return __copy_d(first, last, result, (ptrdiff_t*) 0);
-}
-//偏特化版本一
-template <class T>
-struct __copy_dispatch<T*, T*>
-{
-  T* operator()(T* first, T* last, T* result) {
-    typedef typename __type_traits<T>::has_trivial_assignment_operator t; 
-    return __copy_t(first, last, result, t());
-  }
-};
-//偏特化版本二
-template <class T>
-struct __copy_dispatch<const T*, T*>
-{
-  T* operator()(const T* first, const T* last, T* result) {
-    typedef typename __type_traits<T>::has_trivial_assignment_operator t; 
-    return __copy_t(first, last, result, t());
-  }
-};
-
-#endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
-
-//copy 函数的对外接口,版本一 完全泛化版本
-template <class InputIterator, class OutputIterator>
-inline OutputIterator copy(InputIterator first, InputIterator last,
-                           OutputIterator result)
-{
-  return __copy_dispatch<InputIterator,OutputIterator>()(first, last, result);
-}
-// 重载,对于 原生指针，const char* 版本
-inline char* copy(const char* first, const char* last, char* result) {
-  memmove(result, first, last - first);
-  return result + (last - first);
-}
-//重载,对于 原生版本 const wchar_t* 版本
-inline wchar_t* copy(const wchar_t* first, const wchar_t* last,
-                     wchar_t* result) {
-  memmove(result, first, sizeof(wchar_t) * (last - first));
-  return result + (last - first);
-}
 /* 
 *  将[first, last) 逆向复制到 result -1 为起点逆向进行复制的区间上
 *  算法实现的技巧上与 copy 类似
@@ -278,14 +281,18 @@ copy_n(InputIterator first, Size count,
   return __copy_n(first, count, result, iterator_category(first));
 }
 /*
-  将[first, last)内所有元素改为新值
+  将[first, last)内所有元素赋为新值
 */
 template <class ForwardIterator, class T>
 void fill(ForwardIterator first, ForwardIterator last, const T& value) {
   for ( ; first != last; ++first)
     *first = value;
 }
-//前 n 个元素被设置为新值
+/*
+ * 前 n 个元素被设置为新值
+ * 但是循环的判断条件并没有 first < last, 所以如果 n > 容器的大小那么这个函数会直接覆盖掉容器之后的元素
+ * 避免条件是 利用 inserter 迭代器产生一个插入功能而非覆写操作的适配器(使用 = 时，会调用容器的 insert 函数)
+ */ 
 template <class OutputIterator, class Size, class T>
 OutputIterator fill_n(OutputIterator first, Size n, const T& value) {
   for ( ; n > 0; --n, ++first)
@@ -319,7 +326,7 @@ pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1,
   return pair<InputIterator1, InputIterator2>(first1, first2);
 }
 /*
-*  如果两个序列在 [first, last)区间相等，则返回true
+*  如果两个序列在 [first, last)区间相等，则返回true(使用的默认比较依据是 operator!=)
 *  但 第二个序列长出来的部分不在考虑范围内
 */
 //版本一
@@ -376,7 +383,9 @@ lexicographical_compare(const unsigned char* first1,
 {
   const size_t len1 = last1 - first1;
   const size_t len2 = last2 - first2;
+  //比较相同长度的部分
   const int result = memcmp(first1, first2, min(len1, len2));
+  //如果相同部分相同，则长度更长的元素较大
   return result != 0 ? result < 0 : len1 < len2;
 }
 // const char* 版本

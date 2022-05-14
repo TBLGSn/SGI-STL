@@ -349,8 +349,7 @@ OutputIterator generate_n(OutputIterator first, Size n, Generator gen) {
 }
 
 /*
-* 移除与 value 相等的元素(但不改变原容器删除),而是
-* 将结果复制到一个新区间上
+* 移除与 value 相等的元素(但不改变原容器删除),而是将结果复制到一个新区间上
 */
 template <class InputIterator, class OutputIterator, class T>
 OutputIterator remove_copy(InputIterator first, InputIterator last,
@@ -374,7 +373,7 @@ OutputIterator remove_copy_if(InputIterator first, InputIterator last,
   return result;
 }
 /*
-* 移除与 value 相等的元素(但不删除)
+* 移除与 value 相等的元素(但不删除),利用 remove_copy 将[first+1,last）位置上的元素移动到[first,last) 
 * 对 array 使用时，因为 array 无法改变区间,会导致残余的元素一直存在
 */
 template <class ForwardIterator, class T>
@@ -752,8 +751,11 @@ random_sample(InputIterator first, InputIterator last,
 
 
 /*
-*  将区间[first, last) 中的元素重新排列(按照 Pred 指定的规则)
-*/
+ *  将区间[first, last) 中的元素重新排列(按照 Pred 指定的规则,符合的元素放在区间前端,符合的元素
+ *  放在区间后端)
+ *  使用双指针算法，first 从前往后,last 从后往前,两者在遇见不符合条件的元素时,停止移动,
+ *  交换 first 和 last 指向的元素，继续移动
+ */
 template <class BidirectionalIterator, class Predicate>
 BidirectionalIterator partition(BidirectionalIterator first,
                                 BidirectionalIterator last, Predicate pred) {
@@ -761,7 +763,7 @@ BidirectionalIterator partition(BidirectionalIterator first,
     while (true) // 向后移动 first， 找到符合条件的元素
       if (first == last)
         return first;
-      else if (pred(*first))
+      else if (pred(*first)) //符合条件 pred
         ++first;
       else
         break;
@@ -771,7 +773,7 @@ BidirectionalIterator partition(BidirectionalIterator first,
     while (true) //向前移动 last, 找到符合条件的元素
       if (first == last)
         return first;
-      else if (!pred(*last))
+      else if (!pred(*last)) //不符合条件pred
         --last;
       else
         break;
@@ -2461,7 +2463,7 @@ bool prev_permutation(BidirectionalIterator first, BidirectionalIterator last,
   }
 }
 /* 与 find_end 相反，这里查找[first1, last1) 区间内[first2, last2)某些元素第一次出现的
-  例如 在 序列1 中查找元音 (序列2为 aeiou)
+  例如 在 序列1 中查找元音元素中莫一个元素出现的位置 (序列2为 aeiou)
 */
 template <class InputIterator, class ForwardIterator>
 InputIterator find_first_of(InputIterator first1, InputIterator last1,
@@ -2501,10 +2503,10 @@ ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1,
     while (1) {
       //查找 某个子序列的首次出现点，找不到返回last1
       ForwardIterator1 new_result = search(first1, last1, first2, last2);
-      if (new_result == last1)
+      if (new_result == last1) //没找到
         return result;
       else {
-        result = new_result;
+        result = new_result;//准备下一次查找
         first1 = new_result;
         ++first1;
       }
@@ -2529,7 +2531,7 @@ ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1,
         return result;
       else {
         result = new_result;
-        first1 = new_result;
+        first1 = new_result; 
         ++first1;
       }
     }
@@ -2556,8 +2558,8 @@ __find_end(BidirectionalIterator1 first1, BidirectionalIterator1 last1,
   if (rresult == rlast1)
     return last1;
   else {
-    BidirectionalIterator1 result = rresult.base();
-    advance(result, -distance(first2, last2));
+    BidirectionalIterator1 result = rresult.base(); //转回正常的迭代器,此时指向的 序列2 的尾部
+    advance(result, -distance(first2, last2));//转到序列开头的位置
     return result;
   }
 }

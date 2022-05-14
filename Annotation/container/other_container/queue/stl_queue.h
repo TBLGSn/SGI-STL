@@ -53,7 +53,7 @@ template <class T, class Sequence = vector<T>,
 template <class T, class Sequence, class Compare>
 #endif
 /*
-*   优先队列,默认是 用vector 实现的满二叉树，和 "算法实现"的
+*   优先队列,默认是 用vector 实现的满二叉树，和 "heap 算法"实现的
 *   更应该算作一种 “Adapter”而不是“container”
 *   没有迭代器
 */

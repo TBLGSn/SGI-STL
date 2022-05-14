@@ -94,7 +94,7 @@ void __adjust_heap(RandomAccessIterator first, Distance holeIndex,
 template <class RandomAccessIterator, class T, class Distance>
 inline void __pop_heap(RandomAccessIterator first, RandomAccessIterator last,
                        RandomAccessIterator result, T value, Distance*) {
-  *result = *first;
+  *result = *first; //将 顶部的元素放在 尾部,之后可以使用 back () 取得元素
   __adjust_heap(first, Distance(0), Distance(last - first), value);
 }
 
@@ -109,13 +109,17 @@ template <class RandomAccessIterator>
 inline void pop_heap(RandomAccessIterator first, RandomAccessIterator last) {
   __pop_heap_aux(first, last, value_type(first));
 }
-
+/*
+ * 调整 first 位置处的堆
+ *
+ */
 template <class RandomAccessIterator, class Distance, class T, class Compare>
 void __adjust_heap(RandomAccessIterator first, Distance holeIndex,
                    Distance len, T value, Compare comp) {
   Distance topIndex = holeIndex;
   Distance secondChild = 2 * holeIndex + 2;
   while (secondChild < len) {
+    // 比较左右子节点的大小
     if (comp(*(first + secondChild), *(first + (secondChild - 1))))
       secondChild--;
     *(first + holeIndex) = *(first + secondChild);

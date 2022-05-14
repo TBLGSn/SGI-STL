@@ -10,7 +10,11 @@
 #define __SGI_STL_INTERNAL_NUMERIC_H
 
 __STL_BEGIN_NAMESPACE
-//将元素"累计"到初值 init 上
+/* 
+ * 将元素"累计"到初值 init 上 ，得益于容器实现时的抽象，例如对于 operator ++ 的重写，
+ * 我们只需要使用 ++ first 便能使遍历指针前进到下一个元素的位置
+ * 注意 init 的值没有默认实现，你一定需要指定 init 的值
+ */ 
 template <class InputIterator, class T>
 T accumulate(InputIterator first, InputIterator last, T init) {
   for ( ; first != last; ++first)
@@ -147,15 +151,17 @@ T power(T x, Integer n, MonoidOperation op) {
   if (n == 0)
     return identity_element(op);
   else {
+    // 循环 {n 转换为二进制尾部连续为 0 个数] 次
     while ((n & 1) == 0) {
       n >>= 1;
       x = op(x, x);
     }
-
+    // 循环完 x = 2^t [t:n 转换为二进制尾部连续为 0 个数]
     T result = x;
     n >>= 1;
     while (n != 0) {
       x = op(x, x);
+      // n 的二进制元素为 1 时
       if ((n & 1) != 0)
         result = op(result, x);
       n >>= 1;
