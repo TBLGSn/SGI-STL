@@ -8,8 +8,7 @@
 __STL_BEGIN_NAMESPACE
 /*
   仿函数只为算法服务
-
-  运算类 逻辑运算类 相互比较类
+  文件包含: 1.运算类 2.逻辑运算类 3.相互比较类 4. 选择,证同,投射 5.functor adapter
 */
 // 仿函数可适配的条件: 都应该从下面两者中继承其一,因为function Adapter将会对functors"提问"
 //一元仿函数
@@ -25,13 +24,13 @@ struct binary_function {
     typedef Arg2 second_argument_type;
     typedef Result result_type;
 };
-///////////////////////////////// 算术类仿函数 ////////////////////////////////
-//加法
+///////////////////////////////// 1.算术类仿函数 ////////////////////////////////
+
 template <class T>
 struct plus : public binary_function<T, T, T> {
     T operator()(const T& x, const T& y) const { return x + y; }
 };
-//减法
+
 template <class T>
 struct minus : public binary_function<T, T, T> {
     T operator()(const T& x, const T& y) const { return x - y; }
@@ -60,18 +59,18 @@ struct negate : public unary_function<T, T> {
 template <class T> inline T identity_element(plus<T>) { return T(0); }
 
 template <class T> inline T identity_element(multiplies<T>) { return T(1); }
-//////////////////////////////// 关系运算类 /////////////////////////////////////
-//相等
+//////////////////////////////// 2.关系运算类 /////////////////////////////////////
+
 template <class T>
 struct equal_to : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x == y; }
 };
-//不等
+
 template <class T>
 struct not_equal_to : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x != y; }
 };
-//大于
+
 template <class T>
 struct greater : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x > y; }
@@ -91,9 +90,8 @@ template <class T>
 struct less_equal : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x <= y; }
 };
-//////////////////////////////////////// 逻辑运算类 仿函数/////////////////////////
+//////////////////////////////////////// 3.逻辑运算类 仿函数/////////////////////////
 
-//逻辑 && 
 template <class T>
 struct logical_and : public binary_function<T, T, bool> {
     bool operator()(const T& x, const T& y) const { return x && y; }
@@ -108,6 +106,8 @@ template <class T>
 struct logical_not : public unary_function<T, bool> {
     bool operator()(const T& x) const { return !x; }
 };
+/////////////////////////////////////// 选择,证同,投射 /////////////////////
+
 //选择元素
 template <class T>
 struct identity : public unary_function<T, T> {
@@ -140,7 +140,7 @@ struct project2nd : public binary_function<Arg1, Arg2, Arg2> {
   Arg2 operator()(const Arg1&, const Arg2& y) const { return y; }
 };
 
-/////////////////////////////////////// iterator adapter /////////////////////
+/////////////////////////////////////// functor adapter /////////////////////
 template <class Predicate>
 class unary_negate
   : public unary_function<typename Predicate::argument_type, bool> {

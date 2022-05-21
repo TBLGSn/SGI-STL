@@ -9,7 +9,7 @@
             "cStandard": "c11",
             "cppStandard": "c++14",
             "intelliSenseMode": "linux-clang-x64",
-            "compilerPath": "/usr/bin/g++"
+            "compilerPath": "C:\\mingw64\\bin\\gcc.exe"
         }
     ],
     "version": 4

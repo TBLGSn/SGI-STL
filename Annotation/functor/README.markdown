@@ -4,6 +4,7 @@ STL 中的 functor 为 function  adapter 提供支持.
 ![](/image/STL.png)
 
 ## 仿函数与 STL 算法之间的关系
+STL 仿函数除了能够搭配 Algorithms 使用之外，还应该能够被 function adapter 修饰.
 ![](/image/functor_algorithm.png)
 # 分类
     - 算术运算
@@ -41,3 +42,9 @@ tmp(3, 5);
 greater<int>(3, 5); // 匿名临时对象
 sort(vec.begin(), vec.end(), greater<int>()); // 搭配 STL 算法
 ```
+
+## function adapters
+每一个 function adapters 都内置了一个 member object,这样每一个 function adapters
+都有一个内置被修饰的对象。我们可以对这个对象进行“加工”，达到 adaption 的功能.
+![function_adapter_memberobject.png](/image/function_adapter_memberobject.png)
+

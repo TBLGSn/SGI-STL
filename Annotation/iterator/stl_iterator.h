@@ -530,7 +530,7 @@ class reverse_iterator
 protected:
   Iterator current; //对应的正向迭代器
 public:
-  // 五种类型
+  // 迭代器的五种类型
   typedef typename iterator_traits<Iterator>::iterator_category
           iterator_category;
   typedef typename iterator_traits<Iterator>::value_type
