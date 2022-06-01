@@ -13,7 +13,8 @@ __STL_BEGIN_NAMESPACE
 /* 
  * 将元素"累计"到初值 init 上 ，得益于容器实现时的抽象，例如对于 operator ++ 的重写，
  * 我们只需要使用 ++ first 便能使遍历指针前进到下一个元素的位置
- * 注意 init 的值没有默认实现，你一定需要指定 init 的值
+ * 注意 init 的值没有默认实现，你一定需要指定 init 的值,最重要的是 init 的类型T有溢出的风险,在实现该
+ * 函数的时候,你应该考虑这一点: long long sum = accumulate(nums.begin(), nums.end(), 0LL);
  */ 
 template <class InputIterator, class T>
 T accumulate(InputIterator first, InputIterator last, T init) {
