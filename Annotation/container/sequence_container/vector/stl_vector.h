@@ -268,7 +268,7 @@ protected:
 
 #endif /* __STL_MEMBER_TEMPLATES */
 };
-
+// 重写了 == 操作符，意味着能够通过 == 判断两个 vector 中的元素是否相同
 template <class T, class Alloc>
 inline bool operator==(const vector<T, Alloc>& x, const vector<T, Alloc>& y) {
   return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
